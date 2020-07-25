@@ -1,0 +1,16 @@
+
+body
+    form(action='', method='POST')
+        label(for='name') Username:
+        br
+        input(type='text', name='username', value='')
+        br
+        label(for='pass') Password:
+        br 
+        input(type='password', name='pass', value='')
+        br
+        ul.errors
+            if errors
+                for error in errors
+                    li #{error.msg}
+        input(type='submit', value='Submit')

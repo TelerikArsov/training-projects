@@ -1,0 +1,10 @@
+if(username)
+    h3= username
+    a(href='/admin/create_worker')
+        h2='Create worker'
+    a(href='/admin/create')
+        h2='Create New Tags, Categories and products'
+    form(action='/logout', method='POST')
+        input(type='submit', value='Logout')
+else
+    h3= "Stranger"

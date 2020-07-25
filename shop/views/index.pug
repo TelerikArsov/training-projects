@@ -1,0 +1,16 @@
+html
+  head
+    title= title
+  body
+    h1= message
+  if username
+    h2= username
+    a(href='/account')
+      h2= 'Account'
+    form(action='/logout', method='POST')
+      input(type='submit', value='Logout')
+  else
+    a(href='/register')
+      h2= 'register'
+    a(href='/login')
+      h2= 'login'

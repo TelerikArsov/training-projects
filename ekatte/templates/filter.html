@@ -1,0 +1,75 @@
+<script src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
+<script type=text/javascript>
+    $(document).ready( function () {
+        var table = $('#filter_results').DataTable( {
+            paging: false,
+            scrollY: 400,
+            columns: [
+                { data: 'sett_id' },
+                { data: 'sett_name' },
+                { data: 'muni_id' },
+                { data: 'muni_name' },
+                { data: 'area_id'},
+                { data: 'area_name'}
+            ]
+        } );
+        $('form').on('submit', function(event) {
+            $.ajax({
+                data: {
+                    sname: $('#sname').val()
+                },
+                type: 'POST',
+                url: '/filter',
+                success: function(data){
+                    table.clear().draw();
+                    $('#searched_query').text("Search text: " + data['query']);
+                    table.rows.add(data['result']).draw();
+                    /*data.forEach(function(el) {
+                        table.row.add(el).draw();
+                        console.log(el);
+                    });*/
+                }
+            })
+            event.preventDefault();
+        });
+        $('#stat').click(function (event) {
+            $.ajax({
+                type: 'POST',
+                url: '/stats',
+                success: function (data) {
+                    $('#stat_results').text("Settlements count: " + data['sett_stat'] +
+                    " Municipalities count: " + data['muni_stat'] + " Areas count: " + data['area_stat']);
+                    console.log(data);
+                }
+            });
+        });
+    });
+</script>
+<h1>jQuery Example</h1>
+<form method="POST" action="{{ url_for('filter') }}">
+    <label for="sname">Settlement name:</label><br>
+    <input type="text" id="sname" name="sname"><br>
+    <button id="filter" type="submit">submit</button>
+</form> <br>
+<p id="searched_query"></p>
+<table id="filter_results" class="display">
+    <thead>
+        <tr>
+            <th>Settlement Id</th>
+            <th>Settlement Name</th>
+            <th>Municipality Id</th>
+            <th>Municipality Name</th>
+            <th>Area Id</th>
+            <th>Area Name</th>
+        </tr>
+    </thead>
+    <tbody>
+        
+    </tbody>
+</table>
+<hr>
+<label for="stat">Stats for tables in db</label><br><br>
+<button id="stat" type="submit">Get stats</button>
+<p id="stat_results"></p>

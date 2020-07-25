@@ -1,0 +1,25 @@
+{
+  "name": "store",
+  "version": "1.0.0",
+  "description": "Store application for computer parts",
+  "main": "server.js",
+  "scripts": {
+    "test": "node server.js",
+    "server": "nodemon server.js"
+  },
+  "author": "Telerik Arsov",
+  "license": "MIT",
+  "dependencies": {
+    "connect-redis": "^5.0.0",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "express-session": "^1.17.1",
+    "express-validator": "^6.6.0",
+    "pg": "^8.3.0",
+    "pug": "^3.0.0",
+    "redis": "^3.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.4"
+  }
+}

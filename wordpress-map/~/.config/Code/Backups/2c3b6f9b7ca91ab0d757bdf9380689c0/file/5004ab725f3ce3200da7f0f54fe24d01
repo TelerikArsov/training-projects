@@ -1,0 +1,30 @@
+file:///var/www/html/wp-content/plugins/telebid-map/views/map-view.html {"mtime":1594551353543,"ctime":1594547870381,"size":1879,"etag":"35ckkjp8f1tj","orphaned":false}
+<style>
+    #map {
+        width: 100%;
+        height: 400px;
+        background-color: grey;
+    }
+</style>;
+<h3>Maps</h3>
+<div id="map"></div>
+<script> 
+    var map; 
+    function initMap() { 
+        map = new google.maps.Map(document.getElementById('map'), { center: { lat: -34.397, lng: 150.644 }, zoom: 8 }); 
+    } 
+    var httpRequest = new XMLHttpRequest;
+    httpRequest.onreadystatechange = function(){
+        if (httpRequest.readyState === 4) { // Request is done
+            if (httpRequest.status === 200) { // successfully
+                initMarkers(httpRequest.responseText); // We're calling our method
+            }
+        }
+    };
+    httpRequest.open('GET', "/echo/json");
+    httpRequest.send();
+    var markers = xml.documentElement.getElementsByTagName('marker');
+    
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAVVQYnHrWF-1budKNaSiA6mKkWzB055Ec&callback=initMap" async
+    defer></script>
