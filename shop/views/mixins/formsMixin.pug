@@ -1,4 +1,51 @@
-mixin formTC(path)
+mixin registerUserForm(path)
+    form#path(action=path, method='POST')
+        label(for='name') Username:
+        br
+        input(type='text', name='username', value='')
+        br
+        label(for='email') Email: 
+        br
+        input(type='text', name='email', value='')
+        br
+        label(for='pass') Password:
+        br 
+        input(type='password', name='pass', value='')
+        br
+        label(for='repass') Repeat password:
+        br
+        input(type='password', name='repass', value='')
+        br
+        ul.errors
+            if errors
+                for error in errors
+                    li #{error.msg}
+        input(type='submit', value='Submit')
+
+mixin registerWorkerForm(path)
+    form(action=path, method='POST')
+        label(for='name') Username:
+        br
+        input(type='text', name='username', value='')
+        br
+        label(for='email') Email: 
+        br
+        input(type='text', name='email', value='')
+        br
+        label(for='pass') Password:
+        br 
+        input(type='password', name='pass', value='')
+        br
+        label(for='repass') Repeat password:
+        br
+        input(type='password', name='repass', value='')
+        br
+        ul.errors
+            if errors
+                for error in errors
+                    li #{error.msg}
+        input(type='submit', value='Submit')
+mixin tcForm(path)
     form.TC(action=path, method='POST')
         label(for='name') Name:
         br
@@ -19,7 +66,7 @@ mixin formTC(path)
                 for error in errors
                     li #{error.msg}
         input(type='submit', value='Submit')
-mixin formProduct(path)
+mixin productForm(path)
     form.Products(action=path, method='POST')
         label(for='name') Name:
         br

@@ -1,15 +1,15 @@
 body
     block content
         link(rel='stylesheet', type='text/css', href='/stylesheets/create_tc.css')
-        include mixins/tagCategoryForm
+        include mixins/formsMixin
         p Tags
         br
-        +formTC('/admin/tagCreate')
+        +tcForm('/admin/create/tag')
         button#tags.refresh Refresh
         #tagsEdit.modal
             .modal-content
                 span.close ×
-                +formTC('/admin/edit/tags')
+                +tcForm('/admin/edit/tags')
         table#tagsResults.display(table='tags')
             thead
                 tr
@@ -22,12 +22,12 @@ body
             tbody
         p Categories
         br
-        +formTC('/admin/categoryCreate')
+        +tcForm('/admin/create/category')
         button#categories.refresh Refresh
         #categoriesEdit.modal
             .modal-content
                 span.close ×
-                +formTC('/admin/edit/categories')
+                +tcForm('/admin/edit/categories')
         table#categoriesResults.display(table='categories')
             thead
                 tr
@@ -40,12 +40,12 @@ body
             tbody
         p Products
         br
-        +formProduct('/admin/productCreate')
+        +productForm('/admin/create/product')
         button#products.refresh Refresh
         #productsEdit.modal
             .modal-content
                 span.close ×
-                +formProduct('/admin/edit/products')
+                +productForm('/admin/edit/products')
         table#productsResults.display(table='products')
             thead
                 tr
@@ -127,7 +127,7 @@ body
                 } );
                 $('.refresh').on('click', function(e){
                     $.ajax({
-                        type: 'POST',
+                        type: 'GET',
                         url: "/admin/getAll/" + $(this).attr('id'),
                         success: function(data){
                             table = tables[data['table']]
@@ -142,7 +142,7 @@ body
                     var select = $(this).siblings('.productCategory')
                     select.empty();
                     $.ajax({
-                        type: 'POST',
+                        type: 'GET',
                         url: '/admin/getAll/categories',
                         success: function (data) {
                             $.each(data['result'], function(_, value){
