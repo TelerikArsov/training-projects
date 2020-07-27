@@ -4,7 +4,7 @@ body
         include mixins/formsMixin
         p Tags
         br
-        +tcForm('/admin/create/tag')
+        +tcForm('/admin/create/tags')
         button#tags.refresh Refresh
         #tagsEdit.modal
             .modal-content
@@ -22,7 +22,7 @@ body
             tbody
         p Categories
         br
-        +tcForm('/admin/create/category')
+        +tcForm('/admin/create/categories')
         button#categories.refresh Refresh
         #categoriesEdit.modal
             .modal-content
@@ -40,7 +40,7 @@ body
             tbody
         p Products
         br
-        +productForm('/admin/create/product')
+        +productForm('/admin/create/products')
         button#products.refresh Refresh
         #productsEdit.modal
             .modal-content
@@ -126,35 +126,40 @@ body
                     }
                 } );
                 $('.refresh').on('click', function(e){
-                    $.ajax({
+                   refresh($(this).attr('id'));
+                });
+
+                function refresh(tableName, callback) {
+                     $.ajax({
                         type: 'GET',
-                        url: "/admin/getAll/" + $(this).attr('id'),
+                        url: "/admin/getAll/" + tableName,
                         success: function(data){
-                            table = tables[data['table']]
-                            if(table){
-                                table.clear().draw();
-                                table.rows.add(data['result']).draw();
+                            if(callback) {
+                                callback(data);
+                            }else {
+                                table = tables[data['table']]
+                                if(table){
+                                    table.clear().draw();
+                                    table.rows.add(data['result']).draw();
+                                }
+                                editId = null;
                             }
                         }
                     })
-                });
+                }
+
                 $(".productCategoryRefresh").on('click', function(e) {
                     var select = $(this).siblings('.productCategory')
                     select.empty();
-                    $.ajax({
-                        type: 'GET',
-                        url: '/admin/getAll/categories',
-                        success: function (data) {
-                            $.each(data['result'], function(_, value){
-                                console.log(value.id + " " + value.name)
-                                select.append($('<option>', { 
-                                    value: value.id.toString(10),
-                                    text : value.name 
-                                }));
-                            });
-
-                        }
-                    })
+                    refresh('categories', function (data) {
+                        $.each(data['result'], function(_, value){
+                            console.log(value.id + " " + value.name)
+                            select.append($('<option>', { 
+                                value: value.id.toString(10),
+                                text : value.name 
+                            }));
+                        })
+                    });
                 });
                 $('form').on('submit', function(event) {
                     var data = {}
@@ -179,14 +184,7 @@ body
                         url: $(this).attr('action'),
                         dataType: 'json',
                         success: function(data){
-                            console.log(data)
-                            table = tables[data['table']]
-                            console.log(table)
-                            if(table){
-                                table.clear().draw();
-                                table.rows.add(data['result']).draw();
-                            }
-                            editId = null;
+                            refresh(data['table'])
                         }
                     })
                     event.preventDefault();
