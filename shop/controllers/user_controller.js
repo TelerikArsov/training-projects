@@ -21,7 +21,8 @@ exports.loginUser = (req, res) => {
         if (results.rowCount == 1) {
             req.session.user = results.rows[0]['username'];
             req.session.role = "user";
-            req.session.userId = results.rows[0]['id']  ;
+            req.session.userId = results.rows[0]['id'];
+            console.log(`Req session: ${req.session.user}`);
         }
         res.redirect('/');
     });

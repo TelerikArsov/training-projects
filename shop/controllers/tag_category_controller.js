@@ -9,7 +9,7 @@ function create(table, args, callback){
         callback(error, results);
     });
 }
-function getAll(res, table, callback){
+function getAll(table, callback){
     db.query('Select * FROM ' + table +' ;',
     (error, results) => {
         if (error) {
@@ -41,22 +41,22 @@ function edit(table, args, callback){
     })
 }
 
-exports.createTag = (req, res, callback) => {
+exports.createTag = (req, _res, callback) => {
     if(req.session.user && req.session.role == "admin"){
         const { name, color, visible } = req.body;
         create('tags', [name, color, visible], callback);
     }
 }
 
-exports.deleteTag = (req, res, callback) => {
+exports.deleteTag = (req, _res, callback) => {
     if(req.session.user && req.session.role == "admin"){
         const { id } = req.body;
         deleteTC('tags', [id], callback);
     }
 }
 
-exports.getAllTags = (req, res, callback) =>{
-    getAll(res, 'tags', callback);
+exports.getAllTags = (_req, _res, callback) =>{
+    getAll('tags', callback);
 }
 
 exports.editTags = (req, _res, callback) => {
@@ -66,25 +66,25 @@ exports.editTags = (req, _res, callback) => {
     }
 }
 
-exports.createCategory = (req, res, callback) => {
+exports.createCategory = (req, _res, callback) => {
     if(req.session.user && req.session.role == "admin"){
         const { name, color, visible } = req.body;
         create('categories', [name, color, visible], callback);
     }
 }
 
-exports.deleteCategory = (req, res, callback) => {
+exports.deleteCategory = (req, _res, callback) => {
     if(req.session.user && req.session.role == "admin"){
         const { id } = req.body;
         deleteTC('categories', [id], callback);
     }
 }
 
-exports.getAllCategories = (req, res, callback) =>{
-    getAll(res, 'categories', callback);
+exports.getAllCategories = (_req, _res, callback) =>{
+    getAll('categories', callback);
 }
 
-exports.editCategory = (req, res, callback) => {
+exports.editCategory = (req, _res, callback) => {
     if(req.session.user && req.session.role == "admin"){
         const { id, name, color, visible } = req.body;
         edit('categories', [id, name, color, visible], callback);

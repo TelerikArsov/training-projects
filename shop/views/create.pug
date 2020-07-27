@@ -1,6 +1,6 @@
 body
     block content
-        link(rel='stylesheet', type='text/css', href='/stylesheets/create_tc.css')
+        link(rel='stylesheet', type='text/css', href='/stylesheets/create.css')
         include mixins/formsMixin
         p Tags
         br
@@ -116,11 +116,7 @@ body
                             url: "/admin/delete/" + $(this).parents('table').attr('table'),
                             dataType: 'json',
                             success: function(data){
-                                table = tables[data['table']]
-                                if(table){
-                                    table.clear().draw();
-                                    table.rows.add(data['result']).draw();
-                                }
+                                refresh(data['table'])
                             }
                         });
                     }

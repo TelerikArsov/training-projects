@@ -1,0 +1,79 @@
+head
+    link(rel='stylesheet', type='text/css', href='/stylesheets/catalog.css')
+body
+    block content
+        ul
+            for category in categories
+                li
+                    button.category(type='button', value=category.name)= category.name
+        #filterOptions
+            each value, prop in filterProps
+                - var filterId = prop + 'Filter'
+                label.filterOption
+                    = value.name + ': '
+                    if value.type == 'text'
+                        input(id=filterId, type='text', name=prop, autocomplete='off')
+                    else if value.type == 'range'
+                        div(id=filterId, class='slider', name=prop)
+                        
+            button#filter Filter
+        #productGrid
+    block scripts
+        link(href='https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/13.1.4/nouislider.css', rel='stylesheet')
+        script(src='https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js')
+        script(src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/13.1.4/nouislider.js")
+        script.
+            $(document).ready( function () {
+                var currentCategory = null;
+                $('button.category').on('click', function(){
+                    currentCategory = $(this).val();
+                    filter({ category: $(this).val() })
+                });
+                $('div.slider').each((idx, el) => {
+                    noUiSlider.create($(el).get(0), {
+                        start: [0, 0],
+                        connect: true,
+                        range:{
+                            'min': 0,
+                            'max': 1000,
+                        },
+                        tooltips: true
+                    });
+                })
+                $('button#filter').on('click', function(){
+                    var data = { category: currentCategory };
+                    $('.filterOption').each((idx, el) => {
+                        var input = $(el).children('input');
+                        var slider = $(el).children('div');
+                        if(input.length){
+                            data[input.attr("name")] = '%' + input.val() + '%';
+                        }
+                        if(slider.length){
+                            data[slider.attr("name")+ '[]'] = slider.get(0).noUiSlider.get().
+                            map(e => parseInt(e));
+                        }
+                    });
+                    filter(data);
+                });
+                function filter(filterData){
+                    $.ajax({
+                        data: filterData,
+                        type: 'POST',
+                        url: '/catalog',
+                        dataType: 'json',
+                        success: function(data){
+                            var container = $('#productGrid')
+                            container.empty();
+                            $.each(data['result'], function(_, value){
+                                container.append(`<div class='gridElement'>
+                                    <div>Name: ${value.name}</div>
+                                    <div>Manufacturer: ${value.manifacturer}</div>
+                                    <div>Description: ${value.description}</div>
+                                    <div>Cost: ${value.cost}</div>
+                                </div>`)
+                            });
+
+                        }
+                    });
+                }
+            });
