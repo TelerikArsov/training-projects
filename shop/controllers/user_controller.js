@@ -3,11 +3,11 @@ var db = require('./db');
 exports.createUser = (req, res) => {
     const { username, email, pass } = req.body;
     db.query('INSERT INTO users (username, email, password, created_on) VALUES ($1, $2, $3, $4)',
-     [username, email, pass], (error, _results) => {
+     [username, email, pass, new Date().toISOString()], (error, _results) => {
         if (error) {
           throw error;
         }
-        res.redirect('/login');
+        res.redirect('/user/login');
     });
 }
 // to refactor reasue code?
@@ -53,7 +53,7 @@ exports.updateUser = (req, res) => {
                 throw error
             }
             req.session.user = username;
-            res.redirect('/account')
+            res.redirect('/user/account')
         });
     }
     
