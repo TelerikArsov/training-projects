@@ -4,7 +4,7 @@ exports.createWorker = (req, res) => {
     if(req.session.user && req.session.role == "admin"){
         const { username, email, pass } = req.body;
         db.query('INSERT INTO workers (username, email, password, created_on) VALUES ($1, $2, $3, $4)',
-        [username, email, pass, now()], (error, _results) => {
+        [username, email, pass, new Date().toISOString()], (error, _results) => {
             if (error) {
                 throw error;
             }

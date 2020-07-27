@@ -47,7 +47,7 @@ exports.updateUser = (req, res) => {
     const id = req.session.userId
     const newPassword = newpass == null ? pass : newpass;
     if(id){
-        db.uquery('UPDATE users SET username = $1, email = $2, password = $3 WHERE id = $4 AND password = $5',
+        db.query('UPDATE users SET username = $1, email = $2, password = $3 WHERE id = $4 AND password = $5',
         [username, email, newPassword, id, pass], (error, _results) => {
             if (error) {
                 throw error

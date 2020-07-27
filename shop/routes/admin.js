@@ -83,15 +83,15 @@ var tableActions = {
     },
     create:
     {
-        tag: { func: tagCategoryController.createTag, validations: [
+        tags: { func: tagCategoryController.createTag, validations: [
             check('name').notEmpty().withMessage('Username is required'),
             check('color').notEmpty().withMessage('Color is required')
         ]},
-        category: { func: tagCategoryController.createCategory, validations: [
+        categories: { func: tagCategoryController.createCategory, validations: [
             check('name').notEmpty().withMessage('Username is required'),
             check('color').notEmpty().withMessage('Color is required')
         ]},
-        product: { func: productController.createProduct, validations:[
+        products: { func: productController.createProduct, validations:[
             check('name').notEmpty().withMessage('Username is required'),
             check('manifacturer').notEmpty().withMessage('Manufacturer is required'),
             check('description').notEmpty().withMessage('Description is required'),
@@ -99,7 +99,7 @@ var tableActions = {
             check('category').notEmpty().withMessage('Category is required'),
             check('visible').notEmpty().withMessage('Visibillity is required')
         ]},
-        worker: { func: workerController.createWorker, validations:[
+        workers: { func: workerController.createWorker, validations:[
             check('username').notEmpty().withMessage('Username is required'),
             check('email').notEmpty().withMessage('Email is required'),
             check('email').isEmail().withMessage('Email is not valid'),
@@ -115,7 +115,8 @@ var tableActions = {
 
 router.get('/getAll/:table', async function(req, res){
     if(tableActions.get[req.params['table']]){
-        tableActions.get[req.params['table']](req, res)
+        tableActions.get[req.params['table']](req, res, (err, results) =>
+         res.json({table: req.params['table'], result: results.rows}))
     }
 });
 router.post('/delete/:table', async function(req, res){
@@ -126,8 +127,8 @@ router.post('/edit/:table', async function(req, res){
     await validateReq('table', 'edit', req, res);
 });
 
-router.post('/create/:type' , async function(req, res){
-    await validateReq('type', 'create', req, res);
+router.post('/create/:table' , async function(req, res){
+    await validateReq('table', 'create', req, res);
 })
 
 async function validateReq(paramName, type, req, res){
@@ -141,7 +142,8 @@ async function validateReq(paramName, type, req, res){
         if (errors.length) {
             res.json({errors: errors})
         }else {
-            tableActions[type][req.params[paramName]].func(req, res)
+            tableActions[type][req.params[paramName]].func(req, res, (_e, results) =>
+                res.json({table: req.params[paramName]}));
         }
     }
 }
@@ -162,31 +164,3 @@ function handleErrors(req, res, callback, errorPage){
 }
 
 module.exports = router;
-/*
-// refactor be like at the top
-router.post('/admin/tagCreate', [
-   
-], function(req, res) {
-    console.log(req.body)
-    handleErrors(req, res, db.createTag, 'create');
-});
-
-router.post('/admin/categoryCreate', [
-    
-], function(req, res) {
-    console.log(req.body)
-    handleErrors(req, res, db.createCategory, 'create');
-});
-
-router.post('/admin/productCreate', [
-    
-], function(req, res) {
-    console.log(req.body)
-    handleErrors(req, res, db.createProduct, 'create');
-});
-
-router.post('/admin/create/worker', [
-   
-], function(req, res) {
-    handleErrors(req, res, db.createWorker, 'register_worker');
-});*/
