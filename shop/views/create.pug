@@ -164,9 +164,16 @@ body
                 });
                 $('form').on('submit', function(event) {
                     var data = {}
+                    var form = this;
                     if($(this).parent().attr('class') == "modal-content") {
                         data['id'] = editId;
                     }
-                    genericSubmitForm(data, event, this, function(data){refresh(data['table'])})
+                    genericSubmitForm(data, event, form, function(data){
+                            var ul = $(form).children('.errors')[0]
+                            if(ul){
+                                ul.innerHTML = "";
+                            }
+                            refresh(data['table']);
+                        })
                 });
             });

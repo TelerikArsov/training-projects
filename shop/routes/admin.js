@@ -1,4 +1,5 @@
 const express = require('express');
+const validate = require('../utils/').Validate;
 const workerController = require('../controllers/worker_controller');
 const productController = require('../controllers/product_controller');
 const tagCategoryController = require('../controllers/tag_category_controller');
@@ -33,10 +34,10 @@ router.post('/login', [
             res.status(500).json({errors: workerController.handleError(err)});
         }else{
             if (result.rowCount == 1) {
-                req.session.user = results.rows[0]['username'];
+                req.session.user = result.rows[0]['username'];
                 req.session.role = "admin";
-                req.session.userId = results.rows[0]['id'];
-                res.redirect('/admin');
+                req.session.userId = result.rows[0]['id'];
+                res.status(200).send({result: 'redirect', url:'/admin'})
             }else {
                 res.status(500).json({errors: "Failed to authenticate"});
             }
@@ -158,11 +159,10 @@ async function validateReq(paramName, type, req, res){
             await element.run(req)
         }));
         var errors = validationResult(req).array()
-        console.log(errors)
         if (errors.length) {
-            res.json({filterErrors: errors})
+            res.status(500).json({filterErrors: errors})
         }else {
-            tableActions[type][req.params[paramName]].func(req, res, (err, results) =>{
+            tableActions[type][req.params[paramName]].func(req, res, (err, _results) =>{
                 if(err) {
                     res.status(500).json({errors: tableActions['error'][req.params[paramName]](err)});
                 }else {
