@@ -1,4 +1,5 @@
 body
+    include mixins/snackbarMixin
     block content
         link(rel='stylesheet', type='text/css', href='/stylesheets/create.css')
         include mixins/formsMixin
@@ -59,8 +60,8 @@ body
                 th
                 th 
             tbody
+        +snackbar()
     block scripts
-        script(src='https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js')
         link(rel='stylesheet', type='text/css', href='https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css')
         script(type='text/javascript', charset='utf8', src='https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js')
         script.
@@ -109,7 +110,6 @@ body
                     var data = tables[$(this).parents('table').attr('table')]
                     .row( $(this).parents('tr') ).data();
                     if(confirm(`Delete record with Id: ${data['id']} and Name: ${data['name']}`)){
-                        console.log(data)
                         $.ajax({
                             data: {id: data['id']},
                             type: 'POST',
@@ -117,6 +117,9 @@ body
                             dataType: 'json',
                             success: function(data){
                                 refresh(data['table'])
+                            },
+                            error: function(data){
+                                errorHandle(data.responseJSON, null)
                             }
                         });
                     }
@@ -140,6 +143,9 @@ body
                                 }
                                 editId = null;
                             }
+                        },
+                        error: function(data){
+                            errorHandle(data.responseJSON, null)
                         }
                     })
                 }
@@ -149,7 +155,6 @@ body
                     select.empty();
                     refresh('categories', function (data) {
                         $.each(data['result'], function(_, value){
-                            console.log(value.id + " " + value.name)
                             select.append($('<option>', { 
                                 value: value.id.toString(10),
                                 text : value.name 
@@ -162,27 +167,6 @@ body
                     if($(this).parent().attr('class') == "modal-content") {
                         data['id'] = editId;
                     }
-                    console.log($(this).serializeArray())
-                    $.each($(this).serializeArray(), function() {
-                        if (data[this.name]) {
-                            if (!data[this.name].push) {
-                                data[this.name] = [data[this.name]];
-                            }
-                            data[this.name].push(this.value || '');
-                        } else {
-                            data[this.name] = this.value || '';
-                        }
-                    });
-                    console.log(data)
-                    $.ajax({
-                        data: data,
-                        type: 'POST',
-                        url: $(this).attr('action'),
-                        dataType: 'json',
-                        success: function(data){
-                            refresh(data['table'])
-                        }
-                    })
-                    event.preventDefault();
+                    genericSubmitForm(data, event, this, function(data){refresh(data['table'])})
                 });
             });

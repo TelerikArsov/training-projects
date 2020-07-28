@@ -1,16 +1,13 @@
-
 body
-    form(action='/admin/login', method='POST')
-        label(for='name') Username:
-        br
-        input(type='text', name='username', value='')
-        br
-        label(for='pass') Password:
-        br 
-        input(type='password', name='pass', value='')
-        br
-        ul.errors
-            if errors
-                for error in errors
-                    li #{error.msg}
-        input(type='submit', value='Submit')
+    include mixins/snackbarMixin
+    block content
+        include mixins/formsMixin
+        +loginUserForm('/admin/login')
+        +snackbar()
+    block scripts
+        script.
+            //refactor later
+            $('form').on('submit', function(event) {
+                var data = {}
+                genericSubmitForm(data, event, this)
+            });

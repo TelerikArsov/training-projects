@@ -1,6 +1,7 @@
 head
     link(rel='stylesheet', type='text/css', href='/stylesheets/catalog.css')
 body
+    include mixins/snackbarMixin
     block content
         ul
             for category in categories
@@ -18,9 +19,9 @@ body
                         
             button#filter Filter
         #productGrid
+        +snackbar()
     block scripts
         link(href='https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/13.1.4/nouislider.css', rel='stylesheet')
-        script(src='https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js')
         script(src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/13.1.4/nouislider.js")
         script.
             $(document).ready( function () {
@@ -49,7 +50,7 @@ body
                             data[input.attr("name")] = '%' + input.val() + '%';
                         }
                         if(slider.length){
-                            data[slider.attr("name")+ '[]'] = slider.get(0).noUiSlider.get().
+                            data[slider.attr("name")] = slider.get(0).noUiSlider.get().
                             map(e => parseInt(e));
                         }
                     });
@@ -62,6 +63,7 @@ body
                         url: '/catalog',
                         dataType: 'json',
                         success: function(data){
+                            showSnackbar("Filtered", true);
                             var container = $('#productGrid')
                             container.empty();
                             $.each(data['result'], function(_, value){
@@ -72,7 +74,9 @@ body
                                     <div>Cost: ${value.cost}</div>
                                 </div>`)
                             });
-
+                        },
+                        error: function(data){
+                            errorHandle(data.responseJSON, null)
                         }
                     });
                 }

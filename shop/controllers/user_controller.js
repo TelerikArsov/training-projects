@@ -1,60 +1,46 @@
 var db = require('./db');
 
-exports.createUser = (req, res) => {
+exports.handleError = (err) => {
+    var errorMsg = '';
+    console.log(err)
+    switch(err.code){
+        case '23505':
+            errorMsg = "Username or email already in use";
+            break;
+        default:
+            errorMsg = "Unknown server error";
+    }
+    return errorMsg
+}
+
+exports.createUser = (req, res, callback) => {
     const { username, email, pass } = req.body;
     db.query('INSERT INTO users (username, email, password, created_on) VALUES ($1, $2, $3, $4)',
-     [username, email, pass, new Date().toISOString()], (error, _results) => {
-        if (error) {
-          throw error;
-        }
-        res.redirect('/user/login');
-    });
+     [username, email, pass, new Date().toISOString()], callback);
 }
 // to refactor reasue code?
-exports.loginUser = (req, res) => {
+exports.loginUser = (req, _res, callback) => {
     const { username, pass } = req.body;
     db.query('SELECT id, username FROM users WHERE username = $1 AND password = $2',
-    [username, pass], (error, results) => {
-        if (error) {
-            throw error;
-        }
-        if (results.rowCount == 1) {
-            req.session.user = results.rows[0]['username'];
-            req.session.role = "user";
-            req.session.userId = results.rows[0]['id'];
-            console.log(`Req session: ${req.session.user}`);
-        }
-        res.redirect('/');
-    });
+    [username, pass], callback);
 }
 
 exports.getUser = (req, callback) => {
     const username = req.session.user
     if (username) {
         db.query('SELECT id, username, email FROM users WHERE username = $1 ',
-        [username], (error, results)=> {
-            if (error) {
-                throw error;
-            }
-            if (results.rowCount == 1) {
-                callback(results.rows[0]);
-            }
-        });
+        [username], callback);
     }
 }
 
-exports.updateUser = (req, res) => {
+exports.updateUser = (req, _res, callback) => {
     const { username, email, pass, newpass } = req.body
     const id = req.session.userId
     const newPassword = newpass == null ? pass : newpass;
     if(id){
         db.query('UPDATE users SET username = $1, email = $2, password = $3 WHERE id = $4 AND password = $5',
         [username, email, newPassword, id, pass], (error, _results) => {
-            if (error) {
-                throw error
-            }
-            req.session.user = username;
-            res.redirect('/user/account')
+            callback(error, req.body)
         });
     }
     

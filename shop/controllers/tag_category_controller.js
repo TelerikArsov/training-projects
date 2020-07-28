@@ -2,43 +2,44 @@ var db = require('./db');
 
 function create(table, args, callback){
     db.query('INSERT INTO ' + table + ' (name, color, visible) VALUES ($1, $2, $3)',
-    args, (error, results) => {
-        if (error) {
-            throw error;
-        }
-        callback(error, results);
-    });
+    args, callback);
 }
 function getAll(table, callback){
-    db.query('Select * FROM ' + table +' ;',
-    (error, results) => {
-        if (error) {
-            throw error;
-        }
-        callback(error, results);
-
-            //res.json({table: table, result: results.rows});
-    });
+    db.query('Select * FROM ' + table +' ;', callback);
 }
 
 function deleteTC(table, args, callback){
     db.query('DELETE FROM ' + table + ' WHERE id = $1',
-    args, (error, results) => {
-        if (error) {
-            throw error;
-        }
-        callback(error, results);
-    });
+    args, callback);
 }
 
 function edit(table, args, callback){
     db.query('UPDATE ' + table + ' SET name = $2, color = $3, visible = $4 WHERE id = $1',
-    args, (error, results) => {
-        if (error) {
-            throw error;
-        }
-        callback(error, results);
-    })
+    args, callback);
+}
+
+exports.handleTagError = (err) => {
+    var errorMsg = '';
+    switch(err.code){
+        case '23505':
+            errorMsg = "Name already in use";
+            break;
+        default:
+            errorMsg = "Unknown server error";
+    }
+    return errorMsg
+}
+
+exports.handleCategoryError = (err) => {
+    var errorMsg = '';
+    switch(err.code){
+        case '23505':
+            errorMsg = "Name already in use";
+            break;
+        default:
+            errorMsg = "Unknown server error";
+    }
+    return errorMsg
 }
 
 exports.createTag = (req, _res, callback) => {

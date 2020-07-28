@@ -7,6 +7,18 @@ var filterProps = {
     'price': {dbQuery: 'cost', type: 'range'}
 };
 
+exports.handleError = (err) => {
+    var errorMsg = '';
+    switch(err.code){
+        case '23505':
+            errorMsg = "Name already in use";
+            break;
+        default:
+            errorMsg = "Unknown server error";
+    }
+    return errorMsg
+}
+
 exports.filterProps = Object.assign({}, ...Object.entries(filterProps)
     .map(([k, v]) => {
         if(!v['invisible']){
@@ -96,9 +108,6 @@ exports.getProductsByFilter = (req, res, callback) => {
         }
     }
     query += ';';
-    console.log(query)
-    console.log( Object.values(req.body).filter(
-        function (el) { return el != null;}).reduce((acc, val) => acc.concat(val), []))
     db.query(query, Object.values(req.body).filter(
         function (el) { return el != '';}).reduce((acc, val) => acc.concat(val), []),
     (error, results)=> {

@@ -28,7 +28,20 @@ router.post('/login', [
     check('username').notEmpty().withMessage('Username is required'),
     check('pass').notEmpty().withMessage('Password is required')
 ],  function(req, res) {
-    handleErrors(req, res, workerController.loginWorker, 'login_worker');
+    validate.handleValidation(req, res, workerController.loginWorker, (err, result) => {
+        if(err){
+            res.status(500).json({errors: workerController.handleError(err)});
+        }else{
+            if (result.rowCount == 1) {
+                req.session.user = results.rows[0]['username'];
+                req.session.role = "admin";
+                req.session.userId = results.rows[0]['id'];
+                res.redirect('/admin');
+            }else {
+                res.status(500).json({errors: "Failed to authenticate"});
+            }
+        }
+    });
 });
 
 router.post('/logout', function(req, res){
@@ -110,6 +123,13 @@ var tableActions = {
                 return true;
             })
         ]}
+    },
+    error:
+    {
+        tags: tagCategoryController.handleTagError,
+        categories: tagCategoryController.handleCategoryError,
+        products: productController.handleError,
+        workers: workerController.handleError
     }
 };
 
@@ -140,26 +160,16 @@ async function validateReq(paramName, type, req, res){
         var errors = validationResult(req).array()
         console.log(errors)
         if (errors.length) {
-            res.json({errors: errors})
+            res.json({filterErrors: errors})
         }else {
-            tableActions[type][req.params[paramName]].func(req, res, (_e, results) =>
-                res.json({table: req.params[paramName]}));
+            tableActions[type][req.params[paramName]].func(req, res, (err, results) =>{
+                if(err) {
+                    res.status(500).json({errors: tableActions['error'][req.params[paramName]](err)});
+                }else {
+                    res.json({table: req.params[paramName]})
+                }
+            });
         }
-    }
-}
-
-// remove this function altogether
-function handleErrors(req, res, callback, errorPage){
-    var errors = validationResult(req).array()
-    if (errors.length) {
-        res.render(errorPage, {errors: errors})
-    }else {
-        try{
-            callback(req, res);
-        }catch (e) {
-            console.log(e);
-        }
-        
     }
 }
 

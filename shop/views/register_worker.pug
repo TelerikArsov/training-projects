@@ -1,4 +1,13 @@
 body
+    include mixins/snackbarMixin
     block content
         include mixins/formsMixin
         +registerWorkerForm('/admin/create/workers')
+        +snackbar()
+    block scripts
+        script.
+            //refactor later
+            $('form').on('submit', function(event) {
+                var data = {}
+                genericSubmitForm(data, event, this)
+            });
