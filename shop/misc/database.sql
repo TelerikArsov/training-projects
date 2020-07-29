@@ -34,7 +34,8 @@ create table users(
     password text not null,
     email text unique not null,
     created_on timestamp not null,
-    last_login timestamp
+    last_login timestamp,
+    isverified boolean not null default FALSE
 );
 
 create table workers(
@@ -51,6 +52,13 @@ create table cart(
     id bigserial primary key,
     user_id bigint REFERENCES users(id),
     created_date timestamp not null
+);
+
+create table verification_token(
+    id bigserial primary key,
+    user_id bigint REFERENCES users(id),
+    token text not null,
+    created_on timestamp not null
 );
 
 create table cart_items(

@@ -15,14 +15,21 @@ exports.handleError = (err) => {
 
 exports.createUser = (req, res, callback) => {
     const { username, email, pass } = req.body;
-    db.query('INSERT INTO users (username, email, password, created_on) VALUES ($1, $2, $3, $4)',
+    db.query('INSERT INTO users (username, email, password, created_on) VALUES ($1, $2, $3, $4) RETURNING id',
      [username, email, pass, new Date().toISOString()], callback);
 }
 // to refactor reasue code?
 exports.loginUser = (req, _res, callback) => {
     const { username, pass } = req.body;
-    db.query('SELECT id, username FROM users WHERE username = $1 AND password = $2',
+    db.query('SELECT id, username, isverified FROM users WHERE username = $1 AND password = $2',
     [username, pass], callback);
+}
+
+exports.verifyUser = (id, callback) => {
+    if(id){
+        db.query('UPDATE users SET isverified = TRUE WHERE id = $1',
+        [id], callback);
+    }
 }
 
 exports.getUser = (req, callback) => {

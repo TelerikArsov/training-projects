@@ -11,10 +11,12 @@
   "license": "MIT",
   "dependencies": {
     "connect-redis": "^5.0.0",
+    "crypto": "^1.0.1",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "express-session": "^1.17.1",
     "express-validator": "^6.6.0",
+    "nodemailer": "^6.4.11",
     "pg": "^8.3.0",
     "pug": "^3.0.0",
     "redis": "^3.0.2"

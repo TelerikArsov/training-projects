@@ -1,8 +1,12 @@
+require('dotenv').config();
 const express = require('express');
 const validate = require('../utils/').Validate;
-const userController = require('../controllers/user_controller')
+const userController = require('../controllers/user_controller');
+const verifTokenController = require('../controllers/verifToken_controller');
 const router = express.Router();
-const { check, validationResult} = require('express-validator');
+const { check} = require('express-validator');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 
 router.get('/', function(req, res) {
     if(req.session.user){
@@ -63,14 +67,68 @@ router.post('/register', [
     })
 ], function(req, res) {
     validate.handleValidation(req, res, userController.createUser, (err, result) => {
-        console.log(err);
-        console.log(result)
         if(err){
             res.status(500).json({errors: userController.handleError(err)});
         }else{
-            res.redirect('/user/login');
+            if(result.rowCount == 1){
+                console.log(result.rows[0])
+                var tokenData = {user_id: result.rows[0].id, token: crypto.randomBytes(16).toString('hex')}
+                verifTokenController.createToken(tokenData, (err, _res) => {
+                    if(err){
+                        res.status(500).json({errors: "Failed to create token"});
+                    }else {
+                        let transporter = nodemailer.createTransport({
+                            service: 'gmail',
+                            auth: {
+                                type: 'OAUTH2',
+                                user: process.env.EMAILUSER,
+                                clientId: process.env.EMAILCLIENTID,
+                                clientSecret: process.env.EMAILCLIENTSECRET,
+                                refreshToken: process.env.EMAILREFRESHTOKEN,
+                                accessToken: process.env.EMAILACCESSTOKEN
+                            }
+                        });
+                        var message = {
+                            from: 'no-reply@yourwebapplication.com',
+                            to: req.body.email, 
+                            subject: 'Account Verification Token', 
+                            text: 'Hello,\n\n' + 'Please verify your account by clicking the link: \nhttp:\/\/' + req.headers.host + '\/user\/confirmation\/' + tokenData.token + '.\n' 
+                        };
+                        transporter.sendMail(message, function (err) {
+                            if (err) {
+                                //return res.status(500).json({ errors: err.message });
+                                console.log(err.message)
+                            }
+                        });
+                        res.status(200).send();
+                    }
+                })
+            }else{
+                res.status(500).json({errors: "Unknown token error"});
+            }
+            
         }
     });
+});
+
+router.get('/confirmation/:token', function(req, res) {
+    verifTokenController.getToken(req, res, (err, result) => {
+        if(err) {
+            res.status(500).json({errors: "Cant verify token"});
+        }else{
+            if(result.rowCount == 1) {
+                userController.verifyUser(result.rows[0].user_id, (err, _result) => {
+                    if(err){
+                        res.status(400).json({errors: "User not found"});
+                    }else {
+                        res.redirect('/user/login')
+                    }
+                });
+            }else{
+                res.status(500).json({errors: "Cant verify token"});
+            }
+        }
+    })
 });
 
 router.post('/login', [
@@ -83,11 +141,16 @@ router.post('/login', [
             console.log('err');
         }else{
             if (result.rowCount == 1) {
-                req.session.user = result.rows[0]['username'];
-                req.session.role = "user";
-                req.session.userId = result.rows[0]['id'];
-                console.log(`Req session: ${req.session.user}`);
-                res.status(200).send({result: 'redirect', url:'/'})
+                if(result.rows[0]['isverified']){
+                    req.session.user = result.rows[0]['username'];
+                    req.session.role = "user";
+                    req.session.userId = result.rows[0]['id'];
+                    console.log(`Req session: ${req.session.user}`);
+                    res.status(200).send({result: 'redirect', url:'/'});
+                }
+                else{
+                    res.status(500).json({errors: "Not verified"});
+                }
             }else{
                 res.status(500).json({errors: "Failed to authenticate"});
             }
