@@ -110,6 +110,9 @@ mixin productForm(path)
             option(value='True') True
             option(value='False') False
         br
+        label(for='ammount') Ammount: 
+        br
+        input(type='number', name='ammount', value='')
         ul.errors
         input(type='submit', value='Submit')
 mixin editUserAccountForm(path)

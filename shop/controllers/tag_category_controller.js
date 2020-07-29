@@ -1,7 +1,7 @@
 var db = require('./db');
 
 function create(table, args, callback){
-    db.query('INSERT INTO ' + table + ' (name, color, visible) VALUES ($1, $2, $3)',
+    db.query('INSERT INTO ' + table + ' (name, color, visible) VALUES ($1, $2, $3) RETURNING id',
     args, callback);
 }
 function getAll(table, callback){

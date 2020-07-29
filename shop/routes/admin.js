@@ -150,7 +150,11 @@ router.post('/edit/:table', async function(req, res){
 
 router.post('/create/:table' , async function(req, res){
     await validateReq('table', 'create', req, res);
-})
+});
+
+router.post('/product/ammount', function(req, res) {
+
+});
 
 async function validateReq(paramName, type, req, res){
     if(tableActions[type][req.params[paramName]]){

@@ -57,6 +57,7 @@ body
                 th Cost
                 th Category
                 th Visible
+                th Ammount
                 th
                 th 
             tbody
@@ -82,6 +83,7 @@ body
                         { data: 'cost' },
                         { data: 'category' },
                         { data: 'visible' },
+                        { className: "ammount", data: 'ammount'},
                         { targets: -1, data: null, defaultContent: "<button class='editRecord'>Edit</button>"},
                         { targets: -1, data: null, defaultContent: "<button class='deleteRecord'>X</button>"}
                     ];
@@ -105,6 +107,12 @@ body
                     modal.css("display","block");
                     editId = tables[$(this).parents('table').attr('table')]
                     .row( $(this).parents('tr') ).data()['id'];
+                } );
+                $('.display tbody').on( 'click', '.ammount', function () {
+                    //prefil data todo
+                    var modal = $(`#${$(this).parents('table').attr('table')}Ammount`);
+                    modal.on('click', '.close', function(){ modal.css("display","none"); console.log(modal)});
+                    modal.css("display","block");
                 } );
                 $('.display tbody').on( 'click', 'button.deleteRecord', function () {
                     var data = tables[$(this).parents('table').attr('table')]
