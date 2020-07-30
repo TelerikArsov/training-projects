@@ -3,7 +3,18 @@ const validate = require('../utils/').Validate;
 const workerController = require('../controllers/worker_controller');
 const productController = require('../controllers/product_controller');
 const tagCategoryController = require('../controllers/tag_category_controller');
+const path = require("path");
 const router = express.Router();
+const multer  = require('multer')
+
+var storage = multer.diskStorage({
+    destination: './public/data/uploads/',
+    filename: function (req, file, cb) {
+        cb(null, (req.body.id) + path.extname(file.originalname));
+    }
+  })
+  
+const upload = multer({ storage: storage })
 const { check, validationResult} = require('express-validator');
 
 router.get('/', function(req, res){
@@ -152,8 +163,18 @@ router.post('/create/:table' , async function(req, res){
     await validateReq('table', 'create', req, res);
 });
 
-router.post('/product/ammount', function(req, res) {
+router.post('/upload/image', upload.single('productImage'), function(req, res){
+    res.status(200).end();
+});
 
+router.post('/product/ammount', function(req, res) {
+    productController.editAmmount(req, res, (err, _results) =>{
+        if(err) {
+            res.status(500).json({errors: tableActions['error']['products']});
+        }else {
+            res.json({table: 'products'});
+        }
+    });
 });
 
 async function validateReq(paramName, type, req, res){
@@ -166,11 +187,15 @@ async function validateReq(paramName, type, req, res){
         if (errors.length) {
             res.status(500).json({filterErrors: errors})
         }else {
-            tableActions[type][req.params[paramName]].func(req, res, (err, _results) =>{
+            tableActions[type][req.params[paramName]].func(req, res, (err, results) =>{
                 if(err) {
                     res.status(500).json({errors: tableActions['error'][req.params[paramName]](err)});
                 }else {
-                    res.json({table: req.params[paramName]})
+                    var id = null;
+                    if(results.rowCount == 1){
+                        id = results.rows[0].id;
+                    }
+                    res.json({id: id, table: req.params[paramName]})
                 }
             });
         }

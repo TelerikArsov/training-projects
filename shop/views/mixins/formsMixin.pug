@@ -82,34 +82,45 @@ mixin tcForm(path)
         ul.errors
         input(type='submit', value='Submit')
 mixin productForm(path)
+    .productFromContainer
+        form.productImage(method='post', enctype='multipart/form-data', action='/admin/upload/image')
+                input(type='hidden', name='id', value='')
+                input(type='file', name='productImage')
+        form.Products(action=path, method='POST')
+            label(for='name') Name:
+            br
+            input(type='text', name='name', value='')
+            br
+            label(for='manifacturer') Manufacturer: 
+            br
+            input(type='text', name='manifacturer', value='')
+            br
+            label(for='description') Description: 
+            br
+            input(type='text', name='description', value='')
+            br
+            label(for='cost') Cost: 
+            br
+            input(type='number', name='cost', value='')
+            br
+            label(for='category') Category:
+            br 
+            select.productCategory(name='category')
+            button.productCategoryRefresh(type="button") Refresh
+            br
+            label(for='visible') Visible:
+            br 
+            select(name='visible')
+                option(value='True') True
+                option(value='False') False
+            br
+            label(for='ammount') Ammount: 
+            br
+            input(type='number', name='ammount', value='')
+            ul.errors
+            input(type='submit', value='Submit')
+mixin productAmmountForm(path)
     form.Products(action=path, method='POST')
-        label(for='name') Name:
-        br
-        input(type='text', name='name', value='')
-        br
-        label(for='manifacturer') Manufacturer: 
-        br
-        input(type='text', name='manifacturer', value='')
-        br
-        label(for='description') Description: 
-        br
-        input(type='text', name='description', value='')
-        br
-        label(for='cost') Cost: 
-        br
-        input(type='number', name='cost', value='')
-        br
-        label(for='category') Category:
-        br 
-        select.productCategory(name='category')
-        button.productCategoryRefresh(type="button") Refresh
-        br
-        label(for='visible') Visible:
-        br 
-        select(name='visible')
-            option(value='True') True
-            option(value='False') False
-        br
         label(for='ammount') Ammount: 
         br
         input(type='number', name='ammount', value='')
