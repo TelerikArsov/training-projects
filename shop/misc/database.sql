@@ -97,6 +97,6 @@ create table product_ratings(
 
 create table product_quantity(
     id bigserial primary key,
-    product_id bigint REFERENCES products(id),
+    product_id bigint REFERENCES products(id) ON DELETE CASCADE,
     quantity int not null
 );

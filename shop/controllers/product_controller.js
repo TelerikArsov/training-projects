@@ -41,7 +41,14 @@ function addAmmount(ammount, product_id, callback, result) {
     }
 }
 
-exports.createProduct = (req, res, callback) => {
+exports.editAmmount = (req, _res, callback) => {
+    if(req.session.user && req.session.role == "admin"){
+        db.query('UPDATE product_quantity SET quantity = $2 WHERE product_id = $1 ',
+        Object.values(req.body), callback);
+    }
+}
+
+exports.createProduct = (req, _res, callback) => {
     if(req.session.user && req.session.role == "admin"){
         const { name, manifacturer, description, cost, category, visible, ammount } = req.body;
         db.query('INSERT INTO products (name, manifacturer, description, cost, category_id, visible) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
@@ -82,7 +89,7 @@ exports.getProductsByFilter = (req, res, callback) => {
             }
         }
     }
-    console.log(req.body)
+    //console.log(req.body)
     var query = `SELECT p.id, p.name, manifacturer, description, cost, c.name AS
     category, p.visible FROM products AS p LEFT JOIN categories AS c ON c.id = p.category_id`;
     var whereSet = false;
