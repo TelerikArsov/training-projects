@@ -23,9 +23,9 @@ create table products(
 );
 
 create table product_tags(
-    id bigserial primary key,
     product_id bigint REFERENCES products(id),
     tag_id bigint REFERENCES tags(id)
+    PRIMARY KEY (product_id, tag_id)
 );
 
 create table users(

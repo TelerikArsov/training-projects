@@ -58,6 +58,7 @@ body
                 th Category
                 th Visible
                 th Ammount
+                th Tags
                 th
                 th 
             tbody
@@ -65,12 +66,21 @@ body
             .modal-content
                 span.close ×
                 +productAmmountForm('/admin/product/ammount')
+        #productTags.modal
+            .modal-content
+                span.close ×
+                +tagsList('/admin/product/tags')
         +snackbar()
     block scripts
         link(rel='stylesheet', type='text/css', href='https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css')
         script(type='text/javascript', charset='utf8', src='https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js')
+        link(href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet")
+        script(type='text/javascript', charset='utf8', src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js")
         script.
             $(document).ready( function () {
+                $('.js-example-basic-single').select2({
+                    theme: "classic"
+                });
                 var columns = [
                         { data: 'id' },
                         { data: 'name' },
@@ -88,6 +98,7 @@ body
                         { data: 'category' },
                         { data: 'visible' },
                         { className: "ammount", data: 'ammount'},
+                        { targets: -1, data: null, defaultContent: "<button class='editTags'>Tags</button>"},
                         { targets: -1, data: null, defaultContent: "<button class='editRecord'>Edit</button>"},
                         { targets: -1, data: null, defaultContent: "<button class='deleteRecord'>X</button>"}
                     ];
@@ -107,19 +118,28 @@ body
                 $('.display tbody').on( 'click', 'button.editRecord', function () {
                     //prefil data todo
                     var modal = $(`#${$(this).parents('table').attr('table')}Edit`);
-                    modal.on('click', '.close', function(){ modal.css("display","none"); console.log(modal)});
-                    modal.css("display","block");
-                    editId = tables[$(this).parents('table').attr('table')]
-                    .row( $(this).parents('tr') ).data()['id'];
+                    openModal(modal, this);
                 } );
                 $('.display tbody').on( 'click', '.ammount', function () {
                     //prefil data todo
-                    var modal = $(`#ammount`);
-                    modal.on('click', '.close', function(){ modal.css("display","none"); console.log(modal)});
-                    modal.css("display","block");
-                    editId = tables[$(this).parents('table').attr('table')]
-                    .row( $(this).parents('tr') ).data()['id'];
+                    var modal = $(`#ammount`); data['id']
+                    openModal(modal, this);
                 } );
+                $('.display tbody').on( 'click', 'button.editTags', function () {
+                    //prefil data todo
+                    var modal = $(`#productTags`);
+                    openModal(modal, this);
+                    refreshNotAssignedTags(modal.find('select'));
+                    refresh('productTags', function (data) {
+                        refreshAssignedTags(modal.find('.tags'), data);
+                    });
+                } );
+                function openModal(modal, table){
+                    modal.on('click', '.close', function(){ modal.css("display","none"); editId = null});
+                    modal.css("display","block");
+                    editId = tables[$(table).parents('table').attr('table')]
+                    .row( $(table).parents('tr') ).data()['id'];
+                }
                 $('.display tbody').on( 'click', 'button.deleteRecord', function () {
                     var data = tables[$(this).parents('table').attr('table')]
                     .row( $(this).parents('tr') ).data();
@@ -145,7 +165,9 @@ body
                 function refresh(tableName, callback) {
                      $.ajax({
                         type: 'GET',
+                        data: {id: editId},
                         url: "/admin/getAll/" + tableName,
+                        dataType: 'json',
                         success: function(data){
                             if(callback) {
                                 callback(data);
@@ -155,13 +177,12 @@ body
                                     table.clear().draw();
                                     table.rows.add(data['result']).draw();
                                 }
-                                editId = null;
                             }
                         },
                         error: function(data){
                             errorHandle(data.responseJSON, null)
                         }
-                    })
+                    });
                 }
 
                 $(".productCategoryRefresh").on('click', function(e) {
@@ -176,6 +197,78 @@ body
                         })
                     });
                 });
+
+                $(".productTagsRefresh").on('click', function(e) {
+                    var tagsContainer = $(this).siblings('.tags')
+                    refresh('productTags', function (data) {
+                        refreshAssignedTags(tagsContainer, data);
+                    });
+                });
+                function productTagAction(data, tagsContainer, select){
+                    refresh('productTags', function (data) {
+                        refreshAssignedTags(tagsContainer, data);
+                    });
+                    refreshNotAssignedTags(select);
+                    refresh(data['table']);
+                }
+                $("#addTag").on('click', function(e) {
+                    var tagValue = $(this).siblings('select').val();
+                    var tagsContainer = $(this).siblings('.tags');
+                    var select = $(this).siblings('select');
+                    console.log(tagValue)
+                    $.ajax({
+                        type: 'POST',
+                        data: {id: editId, tag_id: tagValue},
+                        url: "/admin/product/addTag",
+                        dataType: 'json',
+                        success: function(data){
+                            productTagAction(data, tagsContainer, select);
+                        },
+                        error: function(data){
+                            errorHandle(data.responseJSON, null)
+                        }
+                    })
+                });
+                $('.tags').on('click', '.deleteProductTag', function(e){
+                    var tagValue = $(this).parent().attr('value');
+                    var tagsContainer = $(this).parents('.tags');
+                    console.log(tagsContainer)
+                    var select = tagsContainer.siblings('select');
+                    $.ajax({
+                        type: 'POST',
+                        data: {id: editId, tag_id: tagValue},
+                        url: "/admin/product/removeTag",
+                        dataType: 'json',
+                        success: function(data){
+                            productTagAction(data, tagsContainer, select)
+                        },
+                        error: function(data){
+                            errorHandle(data.responseJSON, null)
+                        }
+                    })
+                });
+                function refreshAssignedTags(tagsContainer, data){
+                    tagsContainer.empty();
+                    $.each(data['result'], function(_, value){
+                        tagsContainer.append($('<li>', { 
+                            value: value.id.toString(10),
+                            text : value.name
+                        }).append('<span class="deleteProductTag">x</span>'));
+                    })
+                }
+                function refreshNotAssignedTags(selectObj){
+                    selectObj.empty();
+                    refresh('productNotAssignedTags', function (data) {
+                        $.each(data['result'], function(_, value){
+                            selectObj.append($('<option>', { 
+                                value: value.id.toString(10),
+                                text : value.name,
+                                color: value.color
+                            }));
+                        })
+                    });
+                }
+
                 function uploadFile(formData){
                     $.ajax({
                         url: '/admin/upload/image',

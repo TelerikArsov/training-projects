@@ -150,3 +150,37 @@ mixin editUserAccountForm(path)
         br
         ul.errors
         input(type='submit', value='Submit')
+
+mixin editWorkerAccountForm(path)
+    form(action=path, method='POST')
+        label(for='name') Username:
+        br
+        input(type='text', name='username', value=username)
+        br
+        label(for='email') Email: 
+        br
+        input(type='text', name='email', value=email)
+        br
+        label(for='pass') Password:
+        br 
+        input(type='password', name='pass', value='')
+        br
+        label(for='pass') New Password:
+        br 
+        input(type='password', name='newpass', value='')
+        br
+        label(for='repass') Repeat new password:
+        br
+        input(type='password', name='repass', value='')
+        br
+        ul.errors
+        input(type='submit', value='Submit')
+mixin tagsList(path)
+    button#productTagsRefresh.refresh Refresh
+    ul.tags(path=path)
+    br
+    label(for='visible') Add tag
+    br
+    select(class="js-example-basic-single" name='visible') 
+    button#addTag Add
+    br

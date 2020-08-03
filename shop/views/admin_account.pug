@@ -1,0 +1,16 @@
+body
+    include mixins/snackbarMixin
+    block content
+        include mixins/formsMixin
+        +editWorkerAccountForm('/admin/account')
+        +snackbar()
+    block scripts
+        script.
+            //refactor later
+            $('form').on('submit', function(event) {
+                var data = {}
+                genericSubmitForm(data, event, this, function(data){
+                    showSnackbar("Account edited", true);
+                })
+            });
+    

@@ -122,6 +122,42 @@ exports.getProductsByFilter = (req, res, callback) => {
     callback);
 }
 
+exports.assignTag = (req, _res, callback) => {
+    if(req.session.user && req.session.role == "admin"){
+        const { id, tag_id } = req.body;
+        if(id !== '' && tag_id !== ''){
+            db.query(`INSERT INTO product_tags 
+            (product_id, tag_id) VALUES ($1, $2)`, [id, tag_id], callback);
+        }
+    }
+}
+
+exports.removeTag = (req, _res, callback) => {
+    if(req.session.user && req.session.role == "admin"){
+        const { id, tag_id } = req.body
+        db.query('DELETE FROM product_tags WHERE product_id = $1 and tag_id = $2',
+        [id, tag_id], callback);
+    }
+}
+
+exports.getAssignedTags = (req, _res, callback) => {
+    if(req.session.user && req.session.role == "admin"){
+        const { id } = req.query;
+        db.query(`SELECT * FROM tags WHERE id IN (
+            SELECT tag_id FROM product_tags
+            WHERE product_id = $1)`, [id], callback);
+    }
+}
+
+exports.getNotAssignedTags = (req, res, callback) => {
+    if(req.session.user && req.session.role == "admin"){
+        const { id } = req.query;
+        db.query(`SELECT * FROM tags WHERE id NOT IN (
+            SELECT tag_id FROM product_tags
+            WHERE product_id = $1)`, [id], callback);
+    }
+}
+
 exports.editProduct = (req, res, callback) => {
     if(req.session.user && req.session.role == "admin"){
         const { id, name, manifacturer, description, cost, category, visible } = req.body

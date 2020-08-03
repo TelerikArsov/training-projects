@@ -21,6 +21,10 @@ router.get('/', function(req, res){
     res.render('admin_panel', {admin: req.session.role == "admin" ? true : false});
 });
 
+router.get('/account', function(req, res){
+    res.render('admin_account');
+});
+
 
 router.get('/login', function(req, res){
     res.render('login_worker');
@@ -32,6 +36,28 @@ router.get('/create/worker', function(req, res){
 });
 router.get('/create', function(req, res){
     res.render('create');
+});
+
+router.post('/account', [
+    check('username').notEmpty().withMessage('Username is required'),
+    check('email').notEmpty().withMessage('Email is required'),
+    check('email').isEmail().withMessage('Email is not valid'),
+    check('pass').notEmpty().withMessage('Password is required'),
+    check('newpass').custom((value, {req}) => {
+        if(value !== req.body.repass){
+            throw new Error("Passwords do not match");
+        }
+        return true;
+    })
+], function(req, res) {
+    validate.handleValidation(req, res, workerController.updateWorker, (err, result) => {
+        if(err){
+            res.status(500).json({errors: workerController.handleError(err)});
+        }else{
+            req.session.user = result.username;
+            res.status(200).json({result: result});
+        }
+    });
 });
 
 //AUTH
@@ -72,6 +98,8 @@ var tableActions = {
         tags: tagCategoryController.getAllTags,
         categories: tagCategoryController.getAllCategories,
         products: productController.getAllProducts,
+        productTags: productController.getAssignedTags,
+        productNotAssignedTags: productController.getNotAssignedTags
     },
     delete: 
     {
@@ -147,8 +175,12 @@ var tableActions = {
 
 router.get('/getAll/:table', async function(req, res){
     if(tableActions.get[req.params['table']]){
-        tableActions.get[req.params['table']](req, res, (err, results) =>
-         res.json({table: req.params['table'], result: results.rows}))
+        tableActions.get[req.params['table']](req, res, (err, results) =>{
+            if(err) {
+                console.log(err)
+            }
+            res.json({table: req.params['table'], result: results.rows});
+        });
     }
 });
 router.post('/delete/:table', async function(req, res){
@@ -170,7 +202,27 @@ router.post('/upload/image', upload.single('productImage'), function(req, res){
 router.post('/product/ammount', function(req, res) {
     productController.editAmmount(req, res, (err, _results) =>{
         if(err) {
-            res.status(500).json({errors: tableActions['error']['products']});
+            res.status(500).json({errors: tableActions['error']['products'](err)});
+        }else {
+            res.json({table: 'products'});
+        }
+    });
+});
+
+router.post('/product/addTag', function(req, res) {
+    productController.assignTag(req, res, (err, _results) =>{
+        if(err) {
+            res.status(500).json({errors: tableActions['error']['products'](err)});
+        }else {
+            res.json({table: 'products'});
+        }
+    });
+});
+
+router.post('/product/removeTag', function(req, res) {
+    productController.removeTag(req, res, (err, _results) =>{
+        if(err) {
+            res.status(500).json({errors: tableActions['error']['products'](err)});
         }else {
             res.json({table: 'products'});
         }
