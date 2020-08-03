@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Page Title</title>
+</head>
+
+<body>
+    <label for="n">N: </label>
+    <input type="number" id="n" name="n"><br><br>
+    <label for="a">A:</label>
+    <input type="number" id="a" name="a"><br><br>
+    <label for="b">B: </label>
+    <input type="number" id="b" name="b"><br><br>
+    <label for="c">C:</label>
+    <input type="number" id="c" name="c"><br><br>
+    <button onclick="onClick()">Calculate</button><br><br>
+    <canvas id="DemoCanvas" width="500" height="200"></canvas><br><br>
+    <label for="result">Not painted area</label>
+    <input type="text" id="result" disabled>
+    <script>
+        function onClick(){
+            let n, b, a, c;
+            n = Number(document.getElementById("n").value);
+            b = Number(document.getElementById("b").value);
+            a = Number(document.getElementById("a").value);
+            c = Number(document.getElementById("c").value);
+            calcSegements(n, a, b, c)
+        }
+        function calcSegements(n, a, b, c){
+            let segments = [];
+            let painted_segments = [];
+            for(let i = 0; i <= n/a; i++)
+            {
+                segments.push(i * a);
+            }
+            for (let i = 0; i <= n/b; i++)
+            {
+                segments.push(n - i * b);
+            }
+            segments.sort((a, b) => a - b);
+            segments = segments.filter((v, i, a) => a.indexOf(v) === i);
+            let prevSegEndIdx = 0;
+            let painted_l = 0;
+            for(let i = 0; i < segments.length - 1; i++){
+                for(let j = i + 1; j < segments.length; j++){
+                    if(segments[j] - segments[i] == c){
+                        painted_l += c;
+                        if(prevSegEndIdx < j && prevSegEndIdx > i){
+                            painted_l -= (segments[prevSegEndIdx] - segments[i]);
+                        }
+                        painted_segments.push([segments[i], segments[j]]);
+                        prevSegEndIdx = j;
+                        break;
+                    }
+                }
+            }
+            document.getElementById("result").value = n - painted_l;
+            drawSegments(painted_segments, n);
+        }
+        function drawSegments(segmentArr, n){
+            var canvas = document.getElementById('DemoCanvas');
+            let lineY = canvas.height / 2;
+            let startMainLineX = 10;
+            let endMainLineX = canvas.width - 10;
+            const segmentScale = (endMainLineX - startMainLineX) / n;
+            var baseLineFont = 25;
+            var baseLineSizeForFont = 15;
+            if (canvas.getContext) {
+                let context = canvas.getContext('2d');
+                context.strokeStyle = 'black';
+                context.lineWidth = 1;
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                context.beginPath()
+                context.moveTo(startMainLineX, lineY);
+                context.lineTo(endMainLineX, lineY);
+                context.stroke();
+                context.font = ((baseLineSizeForFont / n * baseLineFont)|0) + 'px Arial';
+                let numberTextOffset = 2;
+                for(let i = 0; i <= n; i ++){
+                    let currNumbetTextOffset = context.measureText(i).width / numberTextOffset;
+                    context.beginPath()
+                    context.fillText(i, i * segmentScale - currNumbetTextOffset + startMainLineX, lineY - 17);
+                    context.moveTo(i * segmentScale + startMainLineX, lineY - 15);
+                    context.lineTo(i * segmentScale + startMainLineX, lineY + 15);
+                    context.stroke();
+                }
+                context.lineWidth = 10;
+                context.strokeStyle = 'red';
+                segmentArr.forEach(element => {
+                    context.beginPath()
+                    context.moveTo(element[0] * segmentScale + startMainLineX, lineY);
+                    context.lineTo(element[1] * segmentScale + startMainLineX, lineY);
+                    context.stroke();
+                });
+            }
+        }
+    </script>
+</body>
