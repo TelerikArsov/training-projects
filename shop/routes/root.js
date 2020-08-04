@@ -1,5 +1,6 @@
 const express = require("express");
 const productController = require('../controllers/product_controller');
+const cartController = require('../controllers/cart_controller');
 const tagCategoryController = require('../controllers/tag_category_controller');
 const router = express.Router();
 
@@ -54,7 +55,13 @@ router.post('/catalog', function(req, res){
 
 router.post('/catalog/addToCart', function(req, res){
     if(req.session.user){
-        
+        cartController.addToCart(req, res, (err, _result) => {
+            if(err){
+                console.log(err);
+                res.status(500).json({errors: "Something went wrong"});
+            }
+            res.status(200).json({success: true});
+        })
     }else {
         res.status(500).json({errors: "Not logged in!"});
     }

@@ -66,9 +66,10 @@ body
                     });
                     filter(data);
                 });
-                $('button.AddToCart').on('click', function(){
+                $('body').on('click', 'button.addToCart', function(){
+                    console.log("PUT");
                     $.ajax({
-                        data: $(this).attr('id'),
+                        data: {productId: $(this).attr('id')},
                         type: 'POST',
                         url: '/catalog/addToCart',
                         dataType: 'json',
@@ -76,7 +77,7 @@ body
                             showSnackbar("Added to cart", true);
                         },
                         error: function(data){
-                            errorHandle(data.errors, null)
+                            errorHandle(data.responseJSON, null)
                         }
                     });
                 });
@@ -94,7 +95,7 @@ body
                                 container.append(`<div class='gridElement'>
                                     <img src='/data/uploads/${value.id}.jpg' width="200" height="100" 
                                     onerror="if (this.src != '/data/uploads/placeholder.jpg') this.src='/data/uploads/placeholder.jpg';">
-                                    <button class="AddToCart" id=${value.id}> Add to cart </button>
+                                    <button class="addToCart" id=${value.id}> Add to cart </button>
                                     <div>Name: ${value.name}</div>
                                     <div>Manufacturer: ${value.manifacturer}</div>
                                     <div>Description: ${value.description}</div>
@@ -130,7 +131,7 @@ body
                             })
                         },
                         error: function(data){
-                            errorHandle(data.errors, null)
+                            errorHandle(data.responseJSON, null)
                         }
                     });
                 }
