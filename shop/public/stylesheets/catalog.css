@@ -5,6 +5,9 @@
     align-items: flex-start;
     height: 500px;
 }
+select {
+    width: 100px;
+}
 
 .gridElement {
     margin: 10px;
@@ -37,5 +40,5 @@
 }
 .filterOption .slider {
     margin-left: 20px;
-    width: 100px;
+    width: 250px;
 } 

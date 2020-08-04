@@ -54,13 +54,6 @@ create table cart(
     created_date timestamp not null
 );
 
-create table verification_token(
-    id bigserial primary key,
-    user_id bigint REFERENCES users(id),
-    token text not null,
-    created_on timestamp not null
-);
-
 create table cart_items(
     id bigserial primary key,
     product_id bigint REFERENCES products(id),
@@ -68,6 +61,13 @@ create table cart_items(
     created_date timestamp not null,
     cart_id bigint REFERENCES cart(id),
     price bigint not null
+);
+
+create table verification_token(
+    id bigserial primary key,
+    user_id bigint REFERENCES users(id),
+    token text not null,
+    created_on timestamp not null
 );
 
 create table orders(

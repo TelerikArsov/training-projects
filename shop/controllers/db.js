@@ -11,3 +11,7 @@ const pool = new Pool({
 exports.query = function(text, params, callback) {
     return pool.query(text, params, callback);
 };
+
+exports.asyncQuery = async function(text, param) {
+    return await pool.query(text, param); 
+};

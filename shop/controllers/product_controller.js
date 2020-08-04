@@ -2,9 +2,9 @@ var db = require('./db');
 
 var filterProps = {
     'name': {dbQuery: 'p.name', type: 'text'},
-    'category': {dbQuery: 'c.name', type: 'text', invisible: true},
-    'manifacturer': {dbQuery: 'manifacturer', type: 'text'},
-    'price': {dbQuery: 'cost', type: 'range'}
+    'category': {dbQuery: 'c.name', type: 'exactText', invisible: true},
+    'manifacturer': {dbQuery: 'manifacturer', type: 'dropdown'},
+    'cost': {dbQuery: 'cost', type: 'range'}
 };
 
 exports.handleError = (err) => {
@@ -106,8 +106,10 @@ exports.getProductsByFilter = (req, res, callback) => {
             }else {
                 query += ' AND ';
             }
-            if(filterProps[prop]['type'] == 'text'){
-                query += `${filterProps[prop]['dbQuery']} LIKE $${count}`;
+            if(filterProps[prop]['type'] == 'text' || filterProps[prop]['type'] == 'dropdown'){
+                query += `${filterProps[prop]['dbQuery']} LIKE '%' || $${count} || '%'`;
+            }else if(filterProps[prop]['type'] == 'exactText'){
+                query += `${filterProps[prop]['dbQuery']} = $${count}`;
             }else if(filterProps[prop]['type'] == 'range'){
                 query += `${filterProps[prop]['dbQuery']} >= $${count} AND `;
                 count++;
@@ -117,9 +119,39 @@ exports.getProductsByFilter = (req, res, callback) => {
         }
     }
     query += ';';
+    //console.log(query, Object.values(req.body).filter(
+        //function (el) { return el != '';}).reduce((acc, val) => acc.concat(val), []))
     db.query(query, Object.values(req.body).filter(
         function (el) { return el != '';}).reduce((acc, val) => acc.concat(val), []),
     callback);
+}
+
+exports.getDropdownPropBy = async (field, leadingValue) => {
+    var query = `SELECT DISTINCT ${field} FROM products 
+    LEFT JOIN categories AS c on c.id = category_id
+    WHERE c.name = $1`;
+    var err = null;
+    var rows = null;
+    try{
+        rows = await db.asyncQuery(query, [leadingValue]);
+    }catch(e){
+        err = e;
+    }
+    return [err, rows];
+}
+
+exports.getRangeProp = async (field, leadingValue) => {
+    var query = `SELECT MAX(${field}), MIN(${field}) FROM products 
+    LEFT JOIN categories AS c on c.id = category_id
+    WHERE c.name = $1`;
+    var err = null;
+    var rows = null;
+    try{
+        rows = await db.asyncQuery(query, [leadingValue]);
+    }catch(e){
+        err = e;
+    }
+    return [err, rows];
 }
 
 exports.assignTag = (req, _res, callback) => {

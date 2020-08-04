@@ -22,8 +22,42 @@ router.get('/catalog', function(req, res){
 });
 
 router.post('/catalog', function(req, res){
-    productController.getProductsByFilter(req, res, (err, results) =>
-        res.json({result: results.rows}));
+    var getPropInfo = req.body.getPropInfo;
+    delete req.body.getPropInfo;
+    productController.getProductsByFilter(req, res, async (err, results) =>
+    {   
+        var propInfo = {};
+        if(getPropInfo){
+            for( prop in productController.filterProps){
+                let err = null, res = null;
+                if(productController.filterProps[prop]['type'] == 'dropdown') {
+                    [err, res] = await productController.getDropdownPropBy(prop, req.body.category);
+                    propInfo[prop] = {};
+                    propInfo[prop]['type'] = 'dropDown';
+                }else if(productController.filterProps[prop]['type'] == 'range') {
+                    [err, res] = await productController.getRangeProp(prop, req.body.category);
+                    propInfo[prop] = {};
+                    propInfo[prop]['type'] = 'range';
+                }
+                if(err) {
+                    propInfo[prop]['err'] = err;
+                }else if(res) {
+                    propInfo[prop]['values'] = res.rows;
+                }
+            }
+
+        }
+        //console.log(propInfo)
+        res.json({result: results.rows, propInfo: propInfo})
+    });
+});
+
+router.post('/catalog/addToCart', function(req, res){
+    if(req.session.user){
+        
+    }else {
+        res.status(500).json({errors: "Not logged in!"});
+    }
 });
 
 module.exports = router;

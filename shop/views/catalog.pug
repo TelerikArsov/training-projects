@@ -14,6 +14,8 @@ body
                     = value.name + ': '
                     if value.type == 'text'
                         input(id=filterId, type='text', name=prop, autocomplete='off')
+                    else if value.type == 'dropdown'
+                        select(id=filterId, class="js-example-basic-single" name=prop) 
                     else if value.type == 'range'
                         div(id=filterId, class='slider', name=prop)
                         
@@ -23,12 +25,17 @@ body
     block scripts
         link(href='https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/13.1.4/nouislider.css', rel='stylesheet')
         script(src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/13.1.4/nouislider.js")
+        link(href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet")
+        script(type='text/javascript', charset='utf8', src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js")
         script.
             $(document).ready( function () {
+                $('.js-example-basic-single').select2({
+                    theme: "classic"
+                });
                 var currentCategory = null;
                 $('button.category').on('click', function(){
                     currentCategory = $(this).val();
-                    filter({ category: $(this).val() })
+                    filter({ category: $(this).val(), getPropInfo: true })
                 });
                 $('div.slider').each((idx, el) => {
                     noUiSlider.create($(el).get(0), {
@@ -41,20 +48,37 @@ body
                         tooltips: true
                     });
                 })
+                var filterTypes = {
+                    'input': (obj) => obj.val(),
+                    'div': (obj) => obj.get(0).noUiSlider.get().
+                            map(e => parseInt(e)),
+                    'select': (obj) => obj.val()
+                }
                 $('button#filter').on('click', function(){
                     var data = { category: currentCategory };
                     $('.filterOption').each((idx, el) => {
-                        var input = $(el).children('input');
-                        var slider = $(el).children('div');
-                        if(input.length){
-                            data[input.attr("name")] = '%' + input.val() + '%';
-                        }
-                        if(slider.length){
-                            data[slider.attr("name")] = slider.get(0).noUiSlider.get().
-                            map(e => parseInt(e));
-                        }
+                        $.each(filterTypes, function(type, func){
+                            var obj = $(el).children(type)
+                            if(obj.length) {
+                                data[obj.attr("name")] = func(obj);
+                            }
+                        })
                     });
                     filter(data);
+                });
+                $('button.AddToCart').on('click', function(){
+                    $.ajax({
+                        data: $(this).attr('id'),
+                        type: 'POST',
+                        url: '/catalog/addToCart',
+                        dataType: 'json',
+                        success: function(data){
+                            showSnackbar("Added to cart", true);
+                        },
+                        error: function(data){
+                            errorHandle(data.errors, null)
+                        }
+                    });
                 });
                 function filter(filterData){
                     $.ajax({
@@ -70,15 +94,43 @@ body
                                 container.append(`<div class='gridElement'>
                                     <img src='/data/uploads/${value.id}.jpg' width="200" height="100" 
                                     onerror="if (this.src != '/data/uploads/placeholder.jpg') this.src='/data/uploads/placeholder.jpg';">
+                                    <button class="AddToCart" id=${value.id}> Add to cart </button>
                                     <div>Name: ${value.name}</div>
                                     <div>Manufacturer: ${value.manifacturer}</div>
                                     <div>Description: ${value.description}</div>
                                     <div>Cost: ${value.cost}</div>
                                 </div>`)
                             });
+                            $.each(data['propInfo'], function(propName, info){
+                                if(info['type'] == 'dropDown'){
+                                    var select = $('select#' + propName + 'Filter');
+                                    select.empty();
+                                    select.append($('<option>', { 
+                                            value: "",
+                                            text : "None"
+                                    }));
+                                    $.each(info['values'], function(_, value){
+                                        select.append($('<option>', { 
+                                            value: value[propName],
+                                            text : value[propName]
+                                        }));
+                                    });
+                                }else if(info['type'] == 'range'){
+                                    let min = parseInt(info['values'][0].min||0);
+                                    let max = parseInt(info['values'][0].max||1);
+                                    let slider = $('div#' + propName + 'Filter' + '.slider')[0];
+                                    slider.noUiSlider.updateOptions({
+                                        range: {
+                                            'min': min,
+                                            'max': max
+                                        }
+                                    });
+                                    slider.noUiSlider.set([min, max])
+                                }
+                            })
                         },
                         error: function(data){
-                            errorHandle(data.responseJSON, null)
+                            errorHandle(data.errors, null)
                         }
                     });
                 }
