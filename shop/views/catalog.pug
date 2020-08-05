@@ -79,7 +79,7 @@ body
                 })
                 $('body').on('click', 'button.addToCart', function(){
                     $.ajax({
-                        data: {productId: $(this).attr('id')},
+                        data: {productId: $(this).attr('productId')},
                         type: 'POST',
                         url: '/catalog/addToCart',
                         dataType: 'json',
@@ -138,6 +138,21 @@ body
                         </div>`);
                     }
                 }
+                $('body').on('click', 'button.rateProduct', function(){
+                    $.ajax({
+                        data: {productId: $(this).attr('productId'), rating: $(this).siblings('input').val()},
+                        type: 'POST',
+                        url: '/catalog/rateProduct',
+                        dataType: 'json',
+                        success: function(data){
+                            showSnackbar("Rated", true);
+                        },
+                        error: function(data){
+                            errorHandle(data.responseJSON, null)
+                        }
+                    });
+                });
+
                 function filter(filterData){
                     $.ajax({
                         data: filterData,
@@ -149,15 +164,16 @@ body
                             var container = $('#productGrid')
                             container.empty();
                             $.each(data['result'], function(_, value){
-                                container.append(`<div class='gridElement'>
+                                container.append(`<div class='gridElement' id="${value.id}GridElement">
                                     <img src='/data/uploads/${value.id}.jpg' width="200" height="100" 
                                     onerror="if (this.src != '/data/uploads/placeholder.jpg') this.src='/data/uploads/placeholder.jpg';">
-                                    <button class="addToCart" id=${value.id}> Add to cart </button>
+                                    <button class="addToCart" productId=${value.id}> Add to cart </button>
                                     <div>Name: ${value.name}</div>
                                     <div>Manufacturer: ${value.manifacturer}</div>
                                     <div>Description: ${value.description}</div>
                                     <div>Cost: ${value.cost}</div>
-                                    <div><input class="rating" type="number" min="1" max="5" value="1"><button class="rateProduct">Rate</button></div>
+                                    <div class="avgRating">Rating: ${value.product_rating ? Number.parseFloat(value.product_rating).toFixed(2) : "1.00"}</div>
+                                    <div><input class="rating" type="number" min="1" max="5" value="1"><button class="rateProduct" productId="${value.id}">Rate</button></div>
                                 </div>`)
                             });
                             $.each(data['propInfo'], function(propName, info){

@@ -90,8 +90,9 @@ exports.getProductsByFilter = (req, res, callback) => {
         }
     }
     //console.log(req.body)
-    var query = `SELECT p.id, p.name, manifacturer, description, cost, c.name AS
-    category, p.visible FROM products AS p LEFT JOIN categories AS c ON c.id = p.category_id`;
+    var query = `SELECT p.id, p.name, manifacturer, description, cost, c.name AS category, AVG(pr.rating) AS product_rating,
+    p.visible FROM products AS p LEFT JOIN categories AS c ON c.id = p.category_id
+    LEFT JOIN product_ratings AS pr on p.id = pr.product_id`;
     var whereSet = false;
     if(req.session.role != "admin") {
         query += ' WHERE p.visible = TRUE';
@@ -118,7 +119,7 @@ exports.getProductsByFilter = (req, res, callback) => {
             count++;
         }
     }
-    query += ';';
+    query += 'GROUP BY p.id, c.name;';
     //console.log(query, Object.values(req.body).filter(
         //function (el) { return el != '';}).reduce((acc, val) => acc.concat(val), []))
     db.query(query, Object.values(req.body).filter(
@@ -196,5 +197,14 @@ exports.editProduct = (req, res, callback) => {
         db.query(`UPDATE products SET name = $2, manifacturer = $3, description = $4,
         cost = $5, category_id = $6, visible = $7 WHERE id = $1`,
         [id, name, manifacturer, description, cost, category, visible], callback);
+    }
+}
+
+exports.addRating = (req, res, callback) => {
+    var userId = req.session.userId;
+    var {productId, rating} = req.body
+    if(userId){
+        db.query(`INSERT INTO product_ratings 
+        (user_id, product_id, rating) VALUES ($1, $2, $3)`, [userId, productId, rating], callback);
     }
 }

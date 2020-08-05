@@ -27,6 +27,10 @@ router.post('/catalog', function(req, res){
     delete req.body.getPropInfo;
     productController.getProductsByFilter(req, res, async (err, results) =>
     {   
+        if(err){
+            console.log(err);
+            res.status(500).json({errors: "Something went wrong"});
+        }
         var propInfo = {};
         if(getPropInfo){
             for( prop in productController.filterProps){
@@ -79,7 +83,7 @@ router.get('/catalog/getCart', function(req, res) {
     }else{
         res.status(500).json({errors: "Not logged in!"});
     }
-})
+});
 
 router.post('/catalog/cartChangeQuantity', function(req, res){
     if(req.session.user){
@@ -89,6 +93,20 @@ router.post('/catalog/cartChangeQuantity', function(req, res){
                 res.status(500).json({errors: "Oops Cant change"});
             }
             res.status(200).json({result: result.rows});
+        })
+    }else{
+        res.status(500).json({errors: "Not logged in!"});
+    }
+});
+
+router.post('/catalog/rateProduct', function(req, res){
+    if(req.session.user){
+        productController.addRating(req, res, (err, result) => {
+            if(err){
+                console.log(err)
+                res.status(500).json({errors: "Oops Cant rate"});
+            }
+            res.status(200).json({success: true});
         })
     }else{
         res.status(500).json({errors: "Not logged in!"});
