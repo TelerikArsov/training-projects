@@ -55,16 +55,44 @@ router.post('/catalog', function(req, res){
 
 router.post('/catalog/addToCart', function(req, res){
     if(req.session.user){
-        cartController.addToCart(req, res, (err, _result) => {
+        cartController.addToCart(req, res, (err, result) => {
             if(err){
                 console.log(err);
                 res.status(500).json({errors: "Something went wrong"});
             }
-            res.status(200).json({success: true});
+            res.status(200).json({result: result.rows[0]});
         })
     }else {
         res.status(500).json({errors: "Not logged in!"});
     }
 });
+
+router.get('/catalog/getCart', function(req, res) {
+    if(req.session.user){
+        cartController.getCartItems(req, res, (err, result) => {
+            if(err){
+                console.log(err)
+                res.status(500).json({errors: "Oops Cant get cart"});
+            }
+            res.status(200).json({result: result.rows});
+        })
+    }else{
+        res.status(500).json({errors: "Not logged in!"});
+    }
+})
+
+router.post('/catalog/cartChangeQuantity', function(req, res){
+    if(req.session.user){
+        cartController.changeQuantity(req, res, (err, result) => {
+            if(err){
+                console.log(err)
+                res.status(500).json({errors: "Oops Cant change"});
+            }
+            res.status(200).json({result: result.rows});
+        })
+    }else{
+        res.status(500).json({errors: "Not logged in!"});
+    }
+})
 
 module.exports = router;
