@@ -16,6 +16,10 @@ int main(){
     int height, width, days;
     int bad_ammount;
     std::cin >> height >> width >> days;
+    if(height > width || width > 1000 || days > 100 || 0 > days){
+        std::cout<< "BAD INPUT" << std::endl;
+        return -1;
+    }
     std::vector<int> grid(height * width, 0);
     int startX = 0, startY = 0;
     std::cin >> bad_ammount;
