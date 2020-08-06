@@ -12,6 +12,7 @@ router.get('/', function(req, res){
 router.use((req, res, next) => {
     if(req.originalUrl == '/catalog'){
         res.locals.filterProps = productController.filterProps;
+        res.locals.filterTypes = productController.types;
     }
     next();
 })
@@ -35,14 +36,11 @@ router.post('/catalog', function(req, res){
         if(getPropInfo){
             for( prop in productController.filterProps){
                 let err = null, res = null;
-                if(productController.filterProps[prop]['type'] == 'dropdown') {
-                    [err, res] = await productController.getDropdownPropBy(prop, req.body.category);
+                if(productController.fetchableTypes.includes(productController.filterProps[prop]['type'])) {
+                    [err, res] = await productController.fetchPropBy(productController.filterProps[prop]['fetchQuery'],
+                         req.body.category);
                     propInfo[prop] = {};
-                    propInfo[prop]['type'] = 'dropDown';
-                }else if(productController.filterProps[prop]['type'] == 'range') {
-                    [err, res] = await productController.getRangeProp(prop, req.body.category);
-                    propInfo[prop] = {};
-                    propInfo[prop]['type'] = 'range';
+                    propInfo[prop]['type'] = productController.filterProps[prop]['type'];
                 }
                 if(err) {
                     propInfo[prop]['err'] = err;
@@ -50,7 +48,6 @@ router.post('/catalog', function(req, res){
                     propInfo[prop]['values'] = res.rows;
                 }
             }
-
         }
         //console.log(propInfo)
         res.json({result: results.rows, propInfo: propInfo})
@@ -94,6 +91,19 @@ router.post('/catalog/cartChangeQuantity', function(req, res){
             }
             res.status(200).json({result: result.rows});
         })
+    }else{
+        res.status(500).json({errors: "Not logged in!"});
+    }
+});
+
+router.post('/catalog/deleteCartItem', function(req, res){
+    if(req.session.user){
+        cartController.deleteCartItem(req, res, (err, result) => {
+            if(err){
+                res.status(500).json({errors: "Cant delete"});
+            }
+            res.status(200).json({result: result.rows});
+        });
     }else{
         res.status(500).json({errors: "Not logged in!"});
     }

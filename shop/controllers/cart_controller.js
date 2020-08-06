@@ -51,6 +51,30 @@ async function getProductPrice(id){
     return price;
 }
 
+async function deleteZeroQuantity(id){
+    var err = null, res = null;
+    try{
+        res = await db.asyncQuery('DELETE FROM cart_items WHERE id = $1 AND quantity = 0 RETURNING id AS deleted_id', [id]);
+    }catch(e){
+        err = e;
+    }
+    return [err, res];
+}
+
+
+exports.deleteCartItem = async (req, _res, callback) => {
+    var userId = req.session.userId
+    if(userId){
+        var cartId = await getCartId(userId);
+        var productId = req.body.productId;
+        if(cartId){
+            db.query('DELETE FROM cart_items WHERE cart_id = $1 AND product_id = $2 RETURNING id AS deleted_id',
+            [cartId, productId], callback);
+        }else{
+            callback(true, null)
+        }
+    }
+}
 
 exports.changeQuantity = async (req, _res, callback) => {
     var userId = req.session.userId
@@ -65,7 +89,12 @@ exports.changeQuantity = async (req, _res, callback) => {
                     callback(err, res);
                 }
                 if(res.rowCount > 0){
-                    callback(...await getCartItemById(res.rows[0].id));
+                    var [deleteErr, deleteValue] = await deleteZeroQuantity(res.rows[0].id)
+                    if(deleteErr || deleteValue.rowCount > 0){
+                        callback(deleteErr, deleteValue);
+                    }else{
+                        callback(...await getCartItemById(res.rows[0].id));
+                    }
                 }else {
                     callback(true, null)
                 }

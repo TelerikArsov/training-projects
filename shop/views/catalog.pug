@@ -12,11 +12,13 @@ body
                 - var filterId = prop + 'Filter'
                 label.filterOption
                     = value.name + ': '
-                    if value.type == 'text'
+                    if value.type == filterTypes.text
                         input(id=filterId, type='text', name=prop, autocomplete='off')
-                    else if value.type == 'dropdown'
-                        select(id=filterId, class="js-example-basic-single" name=prop) 
-                    else if value.type == 'range'
+                    else if value.type == filterTypes.dropdown
+                        select(id=filterId, class="js-example-basic-single" name=prop)
+                    else if value.type == filterTypes.multiDropdown
+                        select(id=filterId, class="js-example-basic-multiple" name=prop, multiple="multiple") 
+                    else if value.type == filterTypes.range
                         div(id=filterId, class='slider', name=prop)
                         
             button#filter Filter
@@ -30,10 +32,12 @@ body
         link(href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet")
         script(type='text/javascript', charset='utf8', src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js")
         script.
+            var filterTypes = !{JSON.stringify(filterTypes)};
             $(document).ready( function () {
                 $('.js-example-basic-single').select2({
                     theme: "classic"
                 });
+                $('.js-example-basic-multiple').select2();
                 var currentCategory = null;
                 $('button.category').on('click', function(){
                     currentCategory = $(this).val();
@@ -50,7 +54,7 @@ body
                         tooltips: true
                     });
                 })
-                var filterTypes = {
+                var filterHtmlTypes = {
                     'input': (obj) => obj.val(),
                     'div': (obj) => obj.get(0).noUiSlider.get().
                             map(e => parseInt(e)),
@@ -59,7 +63,7 @@ body
                 $('button#filter').on('click', function(){
                     var data = { category: currentCategory };
                     $('.filterOption').each((idx, el) => {
-                        $.each(filterTypes, function(type, func){
+                        $.each(filterHtmlTypes, function(type, func){
                             var obj = $(el).children(type)
                             if(obj.length) {
                                 data[obj.attr("name")] = func(obj);
@@ -79,7 +83,7 @@ body
                 })
                 $('body').on('click', 'button.addToCart', function(){
                     $.ajax({
-                        data: {productId: $(this).attr('productId')},
+                        data: {productId: $(this).attr('singleproductId')},
                         type: 'POST',
                         url: '/catalog/addToCart',
                         dataType: 'json',
@@ -100,6 +104,21 @@ body
                     var data = {productId: $(this).attr('id').substring(3), incr: -1};
                     changeQuantityCart(data);
                 });
+                $('body').on('click', '[id^=Del]', function(){
+                    $.ajax({
+                        data: {productId: $(this).attr('id').substring(3)},
+                        type: 'POST',
+                        url: '/catalog/deleteCartItem',
+                        dataType: 'json',
+                        success: function(data){
+                            showSnackbar("Changed quantity", true);
+                            addToCart(data.result[0]);
+                        },
+                        error: function(data){
+                            errorHandle(data.responseJSON, null)
+                        }
+                    });
+                });
                 function changeQuantityCart(data){
                     $.ajax({
                         data: data,
@@ -115,28 +134,35 @@ body
                         }
                     });
                 }
-                function addToCart(data){
-                    if($(`#${data.id}CartId`).length){
-                        $(`#${data.product_id}Quantity`).html(`
-                            Quantity: ${data.quantity}
+                function fillQuantity(data){
+                    return `Quantity: ${data.quantity}
                             <button id="Add${data.product_id}">+</button>
-                            <button id="Sub${data.product_id}">-</button>`);
-                        $(`#${data.product_id}Cost`).html(`
-                            Cost: ${parseInt(data.price) * data.quantity}
-                        `)
-                    }else{
-                        $('div#cartList').append(`<div id="${data.id}CartId" class='productListItem'>
-                            <img src='/data/uploads/${data.product_id}.jpg' width="100" height="50" 
-                            onerror="if (this.src != '/data/uploads/placeholder.jpg') this.src='/data/uploads/placeholder.jpg';">
-                            <div id="${data.product_id}Name">Name: ${data.name}</div>
-                            <div id="${data.product_id}Quantity">
-                                Quantity: ${data.quantity}
-                                <button id="Add${data.product_id}">+</button>
-                                <button id="Sub${data.product_id}">-</button>
-                            </div>
-                            <div id="${data.product_id}Cost">Cost: ${parseInt(data.price) * data.quantity}</div>
-                        </div>`);
+                            <button id="Sub${data.product_id}">-</button>
+                            <button id="Del${data.product_id}">X</button>`
+                }
+                function addToCart(data){
+                    if(data.id){
+                        if($(`#${data.id}CartId`).length){
+                            $(`#${data.product_id}Quantity`).html(`
+                                ${fillQuantity(data)}`);
+                            $(`#${data.product_id}Cost`).html(`
+                                Cost: ${parseInt(data.price) * data.quantity}
+                            `)
+                        }else{
+                            $('div#cartList').append(`<div id="${data.id}CartId" class='productListItem'>
+                                <img src='/data/uploads/${data.product_id}.jpg' width="100" height="50" 
+                                onerror="if (this.src != '/data/uploads/placeholder.jpg') this.src='/data/uploads/placeholder.jpg';">
+                                <div id="${data.product_id}Name">Name: ${data.name}</div>
+                                <div id="${data.product_id}Quantity">
+                                    ${fillQuantity(data)}
+                                </div>
+                                <div id="${data.product_id}Cost">Cost: ${parseInt(data.price) * data.quantity}</div>
+                            </div>`);
+                        }
+                    }else if(data.deleted_id){
+                        $(`#${data.deleted_id}CartId`).remove();
                     }
+                    
                 }
                 $('body').on('click', 'button.rateProduct', function(){
                     $.ajax({
@@ -177,7 +203,7 @@ body
                                 </div>`)
                             });
                             $.each(data['propInfo'], function(propName, info){
-                                if(info['type'] == 'dropDown'){
+                                if(info['type'] == filterTypes.dropdown){
                                     var select = $('select#' + propName + 'Filter');
                                     select.empty();
                                     select.append($('<option>', { 
@@ -190,7 +216,7 @@ body
                                             text : value[propName]
                                         }));
                                     });
-                                }else if(info['type'] == 'range'){
+                                }else if(info['type'] == filterTypes.range){
                                     let min = parseInt(info['values'][0].min||0);
                                     let max = parseInt(info['values'][0].max||1);
                                     let slider = $('div#' + propName + 'Filter' + '.slider')[0];
@@ -201,6 +227,21 @@ body
                                         }
                                     });
                                     slider.noUiSlider.set([min, max])
+                                }else if(info['type'] == filterTypes.multiDropdown){
+                                    var select = $('select#' + propName + 'Filter');
+                                    select.empty();
+                                    select.append($('<option>', { 
+                                            value: "",
+                                            text : "None"
+                                    }));
+                                    $.each(info['values'], function(_, value){
+                                        if(value['name'] != null){
+                                            select.append($('<option>', { 
+                                                value: value['name'],
+                                                text : value['name']
+                                            }));
+                                        }
+                                    });
                                 }
                             })
                         },

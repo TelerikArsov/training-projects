@@ -1,11 +1,23 @@
 var db = require('./db');
 
+
+exports.types = {
+    text: 0,
+    exactText: 1,
+    dropdown: 2,
+    range: 3,
+    multiDropdown: 4
+}
+
 var filterProps = {
-    'name': {dbQuery: 'p.name', type: 'text'},
-    'category': {dbQuery: 'c.name', type: 'exactText', invisible: true},
-    'manifacturer': {dbQuery: 'manifacturer', type: 'dropdown'},
-    'cost': {dbQuery: 'cost', type: 'range'}
+    'name': {dbQuery: 'p.name', type: this.types.text},
+    'category': {dbQuery: 'c.name', type: this.types.exactText, invisible: true},
+    'manifacturer': {dbQuery: 'manifacturer', type: this.types.dropdown, fetchQuery: "SELECT DISTINCT manifacturer FROM products LEFT JOIN categories AS c on c.id = category_id WHERE c.name = $1"},
+    'cost': {dbQuery: 'cost', type: this.types.range, fetchQuery: "SELECT MAX(cost), MIN(cost) FROM products LEFT JOIN categories AS c on c.id = category_id WHERE c.name = $1"},
+    'tags': {dbQuery: 't.id = pt.tag_id AND p.id = pt.product_id AND (t.name IN(',
+        type: this.types.multiDropdown, fetchQuery: "SELECT DISTINCT t.name FROM products AS p LEFT JOIN product_tags AS pt ON pt.product_id = p.id LEFT JOIN tags AS t ON t.id = pt.tag_id WHERE p.category_id IN (SELECT id FROM categories WHERE name = $1)"}
 };
+
 
 exports.handleError = (err) => {
     var errorMsg = '';
@@ -24,10 +36,14 @@ exports.filterProps = Object.assign({}, ...Object.entries(filterProps)
         if(!v['invisible']){
             return ({[k]: {
                 name: k[0].toUpperCase() + k.slice(1), 
-                type: v['type']
+                type: v['type'],
+                fetchQuery: v['fetchQuery']
             }});
         }
     }));
+exports.fetchableTypes = [
+    this.types.range, this.types.dropdown, this.types.multiDropdown]
+
 
 function addAmmount(ammount, product_id, callback, result) {
     if(ammount && product_id){
@@ -68,12 +84,11 @@ exports.deleteProduct = (req, res, callback) => {
         [id], callback);
     }
 }
-
 exports.getAllProducts = (req, res, callback) => {
     var query = `SELECT p.id, p.name, manifacturer, description, cost, c.name AS
     category, p.visible, pq.quantity AS ammount FROM products AS p LEFT JOIN categories AS c ON c.id = p.category_id
     LEFT JOIN product_quantity AS pq ON pq.product_id = p.id`;
-    if(req.session.role != "admin") {
+    if(req.session.role != "admin") {getRangeProp
         query += ' WHERE p.visible = TRUE';
     }
     query += ';';
@@ -91,7 +106,10 @@ exports.getProductsByFilter = (req, res, callback) => {
     }
     //console.log(req.body)
     var query = `SELECT p.id, p.name, manifacturer, description, cost, c.name AS category, AVG(pr.rating) AS product_rating,
-    p.visible FROM products AS p LEFT JOIN categories AS c ON c.id = p.category_id
+    p.visible FROM products AS p
+    LEFT JOIN product_tags AS pt ON pt.product_id = p.id
+    LEFT JOIN tags AS t ON t.id = pt.tag_id 
+    LEFT JOIN categories AS c ON c.id = p.category_id
     LEFT JOIN product_ratings AS pr on p.id = pr.product_id`;
     var whereSet = false;
     if(req.session.role != "admin") {
@@ -99,6 +117,7 @@ exports.getProductsByFilter = (req, res, callback) => {
         whereSet = true;
     }
     var count = 1;
+    var intersection = 0;
     for(var prop in req.body) {
         if(filterProps[prop] && req.body[prop] != ''){
             if(!whereSet){
@@ -107,44 +126,47 @@ exports.getProductsByFilter = (req, res, callback) => {
             }else {
                 query += ' AND ';
             }
-            if(filterProps[prop]['type'] == 'text' || filterProps[prop]['type'] == 'dropdown'){
+            if(filterProps[prop]['type'] == this.types.text || filterProps[prop]['type'] == this.types.dropdown){
                 query += `${filterProps[prop]['dbQuery']} LIKE '%' || $${count} || '%'`;
-            }else if(filterProps[prop]['type'] == 'exactText'){
+            }else if(filterProps[prop]['type'] == this.types.exactText){
                 query += `${filterProps[prop]['dbQuery']} = $${count}`;
-            }else if(filterProps[prop]['type'] == 'range'){
+            }else if(filterProps[prop]['type'] == this.types.range){
                 query += `${filterProps[prop]['dbQuery']} >= $${count} AND `;
                 count++;
                 query += `${filterProps[prop]['dbQuery']} <= $${count}`;
+            }else if(filterProps[prop]['type'] == this.types.multiDropdown){
+                query += `${filterProps[prop]['dbQuery']}`;
+                for(let i = 0; i < (Array.isArray(req.body[prop]) ? req.body[prop].length - 1 : 0); i++){
+                    query += ` $${count}, `;
+                    count++;
+                }
+                query += `$${count}))`;
+                //should be option from req body
+                intersection = (Array.isArray(req.body[prop]) ? req.body[prop].length : 1);
             }
             count++;
         }
     }
-    query += 'GROUP BY p.id, c.name;';
+    var data = Object.values(req.body).filter(
+        function (el) { return el != '';}).reduce((acc, val) => acc.concat(val), []);
+    query += ' GROUP BY p.id, c.name';
+    if(intersection) {
+        query += ` HAVING COUNT( p.id ) = $${count}`;
+        data.push(intersection)
+    }
+    query += ';';
+    /*
+    console.log(req.body)
+    console.log(query);
+    console.log(data);
+    */
     //console.log(query, Object.values(req.body).filter(
         //function (el) { return el != '';}).reduce((acc, val) => acc.concat(val), []))
-    db.query(query, Object.values(req.body).filter(
-        function (el) { return el != '';}).reduce((acc, val) => acc.concat(val), []),
+    db.query(query, data,
     callback);
 }
 
-exports.getDropdownPropBy = async (field, leadingValue) => {
-    var query = `SELECT DISTINCT ${field} FROM products 
-    LEFT JOIN categories AS c on c.id = category_id
-    WHERE c.name = $1`;
-    var err = null;
-    var rows = null;
-    try{
-        rows = await db.asyncQuery(query, [leadingValue]);
-    }catch(e){
-        err = e;
-    }
-    return [err, rows];
-}
-
-exports.getRangeProp = async (field, leadingValue) => {
-    var query = `SELECT MAX(${field}), MIN(${field}) FROM products 
-    LEFT JOIN categories AS c on c.id = category_id
-    WHERE c.name = $1`;
+exports.fetchPropBy = async (query, leadingValue) => {
     var err = null;
     var rows = null;
     try{

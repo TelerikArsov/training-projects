@@ -34,7 +34,11 @@
 }
 
 select {
-    width: 100px;
+    min-width: 100px;
+}
+
+select.js-example-basic-multiple {
+    width: 250px;
 }
 
 .gridElement {
