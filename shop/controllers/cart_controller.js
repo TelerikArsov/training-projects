@@ -110,32 +110,36 @@ exports.addToCart = async (req, _res, callback) => {
     if(userId){
         var cartId = await getCartId(userId);
         var productId = req.body.productId;
-        var productPrice = await getProductPrice(productId)
-        if(!cartId){
-            let [err, res] = await createCart(userId);
-            if(err) {
-                callback(err, res);
+        if(productId != null) {
+            var productPrice = await getProductPrice(productId)
+            if(!cartId){
+                let [err, res] = await createCart(userId);
+                if(err) {
+                    callback(err, res);
+                }
+                cartId = await getCartId(userId);
             }
-            cartId = await getCartId(userId);
-        }
-        //can refactor prob just update and if it fails create new entry
-        db.query('UPDATE cart_items SET quantity = quantity + 1 WHERE cart_id = $1 AND product_id = $2 RETURNING id',
-        [cartId, productId], async (err, res) =>  {
-            if(err){
-                callback(err, res);
-            }
-            if(res.rowCount == 0){
-                db.query('INSERT INTO cart_items (product_id, quantity, created_date, cart_id, price) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-                [productId, 1, new Date().toISOString(), cartId, productPrice], async (err, res) => {
-                    if(err){
-                        callback(err, res);
-                    }
+            //can refactor prob just update and if it fails create new entry
+            db.query('UPDATE cart_items SET quantity = quantity + 1 WHERE cart_id = $1 AND product_id = $2 RETURNING id',
+            [cartId, productId], async (err, res) =>  {
+                if(err){
+                    callback(err, res);
+                }
+                if(res.rowCount == 0){
+                    db.query('INSERT INTO cart_items (product_id, quantity, created_date, cart_id, price) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+                    [productId, 1, new Date().toISOString(), cartId, productPrice], async (err, res) => {
+                        if(err){
+                            callback(err, res);
+                        }
+                        callback(...await getCartItemById(res.rows[0].id));
+                    });
+                }else {
                     callback(...await getCartItemById(res.rows[0].id));
-                });
-            }else {
-                callback(...await getCartItemById(res.rows[0].id));
-            }
-        });
+                }
+            });
+        }else{
+            callback(true, null)
+        }
     }
 }
 

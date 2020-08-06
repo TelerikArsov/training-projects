@@ -83,7 +83,7 @@ body
                 })
                 $('body').on('click', 'button.addToCart', function(){
                     $.ajax({
-                        data: {productId: $(this).attr('singleproductId')},
+                        data: {productId: $(this).attr('productId')},
                         type: 'POST',
                         url: '/catalog/addToCart',
                         dataType: 'json',
