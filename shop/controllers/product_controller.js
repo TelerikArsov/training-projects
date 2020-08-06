@@ -222,11 +222,33 @@ exports.editProduct = (req, res, callback) => {
     }
 }
 
-exports.addRating = (req, res, callback) => {
+async function ratingExists(userId, product_id){
+    var err = null, res = null;
+    var exists = null;
+    try{
+        res = await db.asyncQuery(`SELECT * FROM product_ratings WHERE 
+            user_id = $1 AND product_id = $2`, [userId, product_id])
+    } catch(e){
+        err = e;
+    }
+    if(err == null && res.rowCount == 1){
+        exists = res.rows[0].id;
+    }
+    return exists;
+}
+
+exports.addRating = async (req, res, callback) => {
     var userId = req.session.userId;
     var {productId, rating} = req.body
     if(userId){
-        db.query(`INSERT INTO product_ratings 
-        (user_id, product_id, rating) VALUES ($1, $2, $3)`, [userId, productId, rating], callback);
+        var exists = await ratingExists(userId, productId);
+        if(exists){
+            db.query(`UPDATE product_ratings SET rating = $3 WHERE user_id = $1 
+                AND product_id = $2`, [userId, productId, rating], callback);
+        }else{
+            db.query(`INSERT INTO product_ratings (user_id, product_id, rating)
+                VALUES ($1, $2, $3)`, [userId, productId, rating], callback);
+        }
+        
     }
 }
