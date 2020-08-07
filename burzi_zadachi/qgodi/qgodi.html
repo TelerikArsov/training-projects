@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Page Title</title>
+</head>
+
+<body>
+    <label for="height">Height: </label>
+    <input type="number" id="height" name="height"><br><br>
+    <label for="width">Width:</label>
+    <input type="number" id="width" name="width"><br><br>
+    <label for="days">Days: </label>
+    <input type="number" id="days" name="days"><br><br>
+    <button id="createField" onclick="CreateField()">Create field</button>
+    <button id="ToggleGrid" onclick="ToggleGrid()">Toggle grid</button>
+    <button id="ToggleFillInside" onclick="ToggleFillInside()">Toggle fill inside</button><br><br>
+    <button id="Calculate" onclick="Calculate()">Calculate</button><br><br>
+    <label for="x">X:</label>
+    <input type="number" id="x" name="x">
+    <label for="y">Y: </label>
+    <input type="number" id="y" name="y">
+    <button id="Insert" onclick="Insert()">Insert Bad</button><br>
+    <input id="history" type="range" min="0" max="100" value="0" step="1">
+    <div id="day"></div>​
+    <canvas id="DemoCanvas" width="1550" height="800"></canvas><br><br>
+    <label for="result">Good apples left</label>
+    <input type="text" id="result" disabled>
+    <script>
+        let grid;
+        let gridVisible = false, fillInside = false;
+        let calculated = false, created = false;
+        let bad_ammount = 0;
+        
+        let cells_height, cells_width;
+        let height, width, days;
+        let totalDays = 0;
+        let lastDay = 1;
+        let startX = 0, startY = 0, startIdx = 0;
+
+        let canvas = document.getElementById('DemoCanvas');
+        let context = canvas.getContext('2d')
+
+        let slider = document.getElementById("history");
+        let dayDiv = document.getElementById("day");
+        dayDiv.innerHTML = slider.value;
+        let day = slider.value;
+
+        canvas.addEventListener('click', handleClick);
+        function CreateField(){
+            height = Number(document.getElementById("height").value);
+            width = Number(document.getElementById("width").value);
+            days = Number(document.getElementById("days").value);
+            slider.max = days;
+            slider.value = 0;
+            dayDiv.innerHTML = slider.value
+            totalDays = 0;
+            bad_ammount = 0;
+            startX = 0;
+            startY = 0;
+            startIdx = 0;
+            lastDay = 1;
+            grid = Array(height * width).fill(0);
+            created = true;
+            calculated = false;
+            RenderFirst(height, width)
+        }
+        function redraw(){
+            if(created){
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                drawGrid(height, width)
+                drawCells(Number(day));
+            }
+        }
+
+        slider.oninput = function(){
+            day = this.value;
+            dayDiv.innerHTML = day;
+            console.log(day)
+            redraw()
+        }
+
+        function RenderFirst(height, width){
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            cells_height = canvas.height / height;
+            cells_width = canvas.width / width;
+            drawGrid(height, width)
+        }
+        function ToggleGrid(){
+            gridVisible = !gridVisible
+            if(created){
+                if(!gridVisible){
+                    context.clearRect(0, 0, canvas.width, canvas.height);
+                    drawCells(Number(day));
+                }else {
+                    drawGrid(height, width);
+                }
+            }
+        }
+        function ToggleFillInside(){
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            fillInside = !fillInside;
+            redraw()
+        }
+
+        function makeBad(predicate, newPos, newValue){
+            if(predicate && grid[newPos] == 0){
+                grid[newPos] = newValue;
+                bad_ammount++;
+                if(newPos < startIdx){
+                    startIdx = newPos;
+                }
+            }
+        }
+
+        function Calculate(){
+            if(created){
+                totalDays += days;
+                slider.max = totalDays;
+                for(let j = lastDay; j <= totalDays; j++){
+                    for(let i = startIdx; i < grid.length; i++){
+                        if(grid[i] > 0 ) {
+                            makeBad(Math.floor(i/width) != 0, i - width, j + 1);
+                            makeBad(Math.floor(i/width) + 1 != height, i + width, (j + 1) * -1);
+                            makeBad(i%width != 0, i - 1, j + 1);
+                            makeBad(i%width + 1 != width, i + 1, (j + 1) * -1);
+                        }else if(grid[i] < 0){
+                            grid[i] *= -1;
+                        }
+                    }
+                }
+                lastDay = totalDays;
+                drawCells();
+                document.getElementById("result").value = grid.length - bad_ammount;
+            }
+        }
+
+        function drawCells(day = 0){
+            for(let i = startIdx; i < grid.length; i++){
+                if(grid[i] != 0){
+                    let alpha  = 1;
+                    if(day > 0){
+                        if(fillInside){
+                            if(grid[i] > day + 1)
+                                alpha = 0.5
+                        }else{
+                            if(grid[i] != day + 1)
+                                alpha = 0.5
+                        }
+                    }
+                    context.fillStyle = 'rgba(' + (255 -  Math.floor(255 / totalDays) / 1.1 * (grid[i] - 1)) + ', 0, 0,' +
+                    alpha + ')';
+                    drawCell(i % width, Math.floor(i/width));
+                }
+            }           
+        }
+        function drawCell(x, y, offset = 2){
+            context.fillRect(x * cells_width + offset, y * cells_height + offset, cells_width - offset * 2, cells_height - offset * 2);
+        }
+        function drawGrid(height, width){
+            //vertical
+            if(gridVisible){
+                context.lineWidth = 0.8;
+                for(let i = 0; i < width - 1; i++){
+                    context.beginPath()
+                    context.moveTo((i + 1) * cells_width, 0);
+                    context.lineTo((i + 1) * cells_width, canvas.height);
+                    context.stroke();
+                }
+
+                //horizontal
+                for(let i = 0; i < height - 1; i++){
+                    context.beginPath()
+                    context.moveTo(0, (i + 1) * cells_height);
+                    context.lineTo(canvas.width, (i + 1) * cells_height);
+                    context.stroke();
+                }
+            }
+        }
+        function getGridIdx(x, y){
+            return y* width + x;
+        }
+
+        function Insert(x = Number(document.getElementById("x").value) - 1,
+            y = Number(document.getElementById("y").value) - 1){
+            if(!calculated && created){
+                context.fillStyle = "black";
+                drawCell(x, y)
+                if(startY > y){
+                    startY = y;
+                    startX = x;
+                }else if(startY == y){
+                    if(startX > x){
+                        startX = x;
+                    }
+                }
+                startIdx = getGridIdx(startX, startY);
+                grid[getGridIdx(x, y)] = lastDay;
+                bad_ammount ++;
+            }
+        }
+        
+        function handleClick(e){
+            if(!calculated && created){
+                let mX = clamp(Math.floor(e.offsetX / cells_width), 0, width - 1);
+	            let mY = clamp(Math.floor(e.offsetY / cells_height), 0, height - 1);
+                Insert(mX, mY)
+            }
+        }
+
+        const clamp =function(number, min, max) {
+            return Math.max(min, Math.min(number, max));
+        }
+    </script>
+</body>
