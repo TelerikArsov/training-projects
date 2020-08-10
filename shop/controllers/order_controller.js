@@ -8,21 +8,24 @@ async function addToOrder(orderId, data){
     [data.productId, data.quantity, new Date().toISOString(), orderId, data.productPrice]);
 }
 
+
 exports.craeteOrder = async (req, _res, callback) => {
     var userId = req.session.userId
     if(userId){
-        var {payed, reciever_name, address} = req.body;
+        var {paid, reciever_name, address} = req.body;
         var orderId = await db.queryAsync(`INSERT INTO orders 
-            (user_id, payed, reciever_name, address, created_date) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-            [userId, payed, reciever_name, address, new Date().toISOString()]);
-        cartController.getCartItems(req, null, (err, res) => {
+            (user_id, paid, reciever_name, address, created_date) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+            [userId, paid, reciever_name, address, new Date().toISOString()]);
+        cartController.getCartItems(null, null, (err, res) => {
             if(err){
                 callback(err, res);
             }
             if(res.rowCount > 0){
                 for(row in res.rows){
                     try{
-                       r = addToOrder(orderId, data)
+                       r = addToOrder(orderId, row)
+                       deleteCartItem = db.queryAsync('DELETE FROM cart_items WHERE cart_id = $1 AND product_id = $2 RETURNING id AS deleted_id',
+                       [row.cartId, row.productId]);
                     }catch(e){
                         callback(e, r);
                     }

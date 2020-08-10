@@ -1,8 +1,12 @@
 const express = require("express");
+const validate = require('../utils/').Validate;
 const productController = require('../controllers/product_controller');
 const cartController = require('../controllers/cart_controller');
+const orderController = require('../controllers/order_controller')
 const tagCategoryController = require('../controllers/tag_category_controller');
 const router = express.Router();
+
+const { check, validationResult} = require('express-validator');
 
 router.get('/', function(req, res){
     console.log(req.session.user)
@@ -120,6 +124,25 @@ router.post('/catalog/rateProduct', function(req, res){
         })
     }else{
         res.status(500).json({errors: "Not logged in!"});
+    }
+})
+
+router.post('/catalog/createOrder', [
+    check('paid').notEmpty().withMessage('Payment must be made'),
+    check('reciever_name').notEmpty().withMessage('Name is required'),
+    check('address').notEmpty().withMessage('Address is not valid'),
+], function(req, res){
+    if(req.session.user){
+        validate.handleValidation(req, res, orderController.createOrder, (err, result) => {
+            if(err){
+                res.status(500).json({error:" Cant make order"});
+            }else{
+                req.session.user = result.username;
+                res.status(200).json({result: result});
+            }
+        });
+    }else{
+        res.status(500).json({errors: "Not logged in!"})
     }
 })
 

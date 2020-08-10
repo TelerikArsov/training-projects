@@ -1,6 +1,6 @@
 mixin registerUserForm(path)
     form#path(action=path, method='POST')
-        label(for='name') Username:
+        label(for='username') Username:
         br
         input(type='text', name='username', value='')
         br
@@ -21,7 +21,7 @@ mixin registerUserForm(path)
 
 mixin registerWorkerForm(path)
     form(action=path, method='POST')
-        label(for='name') Username:
+        label(for='username') Username:
         br
         input(type='text', name='username', value='')
         br
@@ -41,7 +41,7 @@ mixin registerWorkerForm(path)
         input(type='submit', value='Submit')
 mixin loginUserForm(path)
     form(action=path, method='POST')
-        label(for='name') Username:
+        label(for='username') Username:
         br
         input(type='text', name='username', value='')
         br
@@ -53,7 +53,7 @@ mixin loginUserForm(path)
         input(type='submit', value='Submit')
 mixin loginWorkerForm(path)
     form(action=path, method='POST')
-        label(for='name') Username:
+        label(for='username') Username:
         br
         input(type='text', name='username', value='')
         br
@@ -128,7 +128,7 @@ mixin productAmmountForm(path)
         input(type='submit', value='Submit')
 mixin editUserAccountForm(path)
     form(action=path, method='POST')
-        label(for='name') Username:
+        label(for='username') Username:
         br
         input(type='text', name='username', value=username)
         br
@@ -153,7 +153,7 @@ mixin editUserAccountForm(path)
 
 mixin editWorkerAccountForm(path)
     form(action=path, method='POST')
-        label(for='name') Username:
+        label(for='username') Username:
         br
         input(type='text', name='username', value=username)
         br

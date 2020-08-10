@@ -73,7 +73,7 @@ create table verification_token(
 create table orders(
     id bigserial primary key,
     user_id bigint REFERENCES users(id),
-    payed bigint not null,
+    paid bigint not null,
     reciever_name text not null,
     address text not null,
     created_date timestamp not null

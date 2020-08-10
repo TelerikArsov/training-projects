@@ -24,7 +24,23 @@ body
             button#filter Filter
         #catalogContent
             #productGrid
-            #cartList
+            div
+                #cartList
+                button#submitCart Create Order
+        #orderInfo.modal
+            .modal-content
+                span.close ×
+                form#orderInfoForm
+                    label(for='address') Address:
+                    br
+                    input(type='text', name='address', value=username)
+                    br
+                    label(for='name') Reciever Name: 
+                    br
+                    input(type='text', name='name', value=email)
+                    br
+                    ul.errors
+                    input#placeOrder(type='submit', value='Submit')
         +snackbar()
     block scripts
         link(href='https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/13.1.4/nouislider.css', rel='stylesheet')
@@ -60,6 +76,17 @@ body
                             map(e => parseInt(e)),
                     'select': (obj) => obj.val()
                 }
+                $('button#submitCart').on('click', function(){
+                    var modal = $("#orderInfo")
+                    modal.on('click', '.close', function(){ modal.css("display","none"); editId = null});
+                    modal.css("display","block");
+                });
+                $('button#placeOrder').on('click', function(){
+                    var form = $("#orderInfoForm")
+                    genericSubmitForm({}, null, form, function (data){
+                        showSnackbar("Created order", true);
+                    })
+                });
                 $('button#filter').on('click', function(){
                     var data = { category: currentCategory };
                     $('.filterOption').each((idx, el) => {
