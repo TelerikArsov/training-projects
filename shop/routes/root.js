@@ -129,15 +129,15 @@ router.post('/catalog/rateProduct', function(req, res){
 
 router.post('/catalog/createOrder', [
     check('paid').notEmpty().withMessage('Payment must be made'),
-    check('reciever_name').notEmpty().withMessage('Name is required'),
+    check('name').notEmpty().withMessage('Name is required'),
     check('address').notEmpty().withMessage('Address is not valid'),
 ], function(req, res){
     if(req.session.user){
         validate.handleValidation(req, res, orderController.createOrder, (err, result) => {
+            console.log(err)
             if(err){
                 res.status(500).json({error:" Cant make order"});
             }else{
-                req.session.user = result.username;
                 res.status(200).json({result: result});
             }
         });

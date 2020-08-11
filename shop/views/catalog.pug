@@ -30,7 +30,7 @@ body
         #orderInfo.modal
             .modal-content
                 span.close ×
-                form#orderInfoForm
+                form#orderInfoForm(action="/catalog/createOrder")
                     label(for='address') Address:
                     br
                     input(type='text', name='address', value=username)
@@ -81,9 +81,10 @@ body
                     modal.on('click', '.close', function(){ modal.css("display","none"); editId = null});
                     modal.css("display","block");
                 });
-                $('button#placeOrder').on('click', function(){
-                    var form = $("#orderInfoForm")
-                    genericSubmitForm({}, null, form, function (data){
+                $('#orderInfoForm').on('submit', function(event){
+                    var form = this
+                    genericSubmitForm({paid: 1}, event, form, function (data){
+                        refreshCart();
                         showSnackbar("Created order", true);
                     })
                 });
@@ -99,15 +100,19 @@ body
                     });
                     filter(data);
                 });
-                $.ajax({
-                    type: 'GET',
-                    url: '/catalog/getCart',
-                    success: function(data){
-                        $.each(data['result'], function(_, el){
-                            addToCart(el);
-                        });
-                    }
-                })
+                function refreshCart(){
+                    $('#cartList').empty();
+                    $.ajax({
+                        type: 'GET',
+                        url: '/catalog/getCart',
+                        success: function(data){
+                            $.each(data['result'], function(_, el){
+                                addToCart(el);
+                            });
+                        }
+                    })
+                }
+                refreshCart();
                 $('body').on('click', 'button.addToCart', function(){
                     $.ajax({
                         data: {productId: $(this).attr('productId')},

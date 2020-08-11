@@ -1,40 +1,81 @@
 var db = require('./db');
 var cartController = require('./cart_controller');
-const { reset } = require('nodemon');
 
 async function addToOrder(orderId, data){
-    return await db.queryAsync(`INSERT INTO order_items (product_id, quantity, 
+    return await db.asyncQuery(`INSERT INTO order_items (product_id, quantity, 
         created_date, order_id, price) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-    [data.productId, data.quantity, new Date().toISOString(), orderId, data.productPrice]);
+    [data.product_id, data.quantity, new Date().toISOString(), orderId, data.price]);
+}
+
+ async function getOrderId(userId, name, address, cartId){
+    var err = null, res = null;
+    var id = null;
+    try{
+        res = await db.asyncQuery(`SELECT * FROM orders WHERE user_id = $1 AND reciever_name = $2 AND address = $3
+        AND orignal_cart_id = $4`, [userId, name, address, cartId])
+    } catch(e){
+        err = e;
+    }
+    if(err == null && res.rowCount == 1){
+        id = res.rows[0].id;
+    }
+    return id;
 }
 
 
-exports.craeteOrder = async (req, _res, callback) => {
+
+exports.createOrder = (req, _res, callback) => {
     var userId = req.session.userId
     if(userId){
-        var {paid, reciever_name, address} = req.body;
-        var orderId = await db.queryAsync(`INSERT INTO orders 
-            (user_id, paid, reciever_name, address, created_date) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-            [userId, paid, reciever_name, address, new Date().toISOString()]);
-        cartController.getCartItems(null, null, (err, res) => {
-            if(err){
-                callback(err, res);
-            }
-            if(res.rowCount > 0){
-                for(row in res.rows){
+        ;(async (callback, req, userId) => {
+            var cartId = await cartController.getCartId(userId)
+            if(cartId){
+                var {paid, name, address} = req.body;
+                var orderId = await getOrderId(userId, name, address, cartId)
+                console.log("FIrst:", orderId, cartId)
+                if(!orderId){
                     try{
-                       r = addToOrder(orderId, row)
-                       deleteCartItem = db.queryAsync('DELETE FROM cart_items WHERE cart_id = $1 AND product_id = $2 RETURNING id AS deleted_id',
-                       [row.cartId, row.productId]);
+                        result = await db.asyncQuery(`INSERT INTO orders 
+                        (user_id, paid, reciever_name, address, created_date, orignal_cart_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+                        [userId, paid, name, address, new Date().toISOString(), cartId]);
+                        if(result.rowCount == 1) {
+                            orderId = result.rows[0].id
+                        }
                     }catch(e){
-                        callback(e, r);
+                        console.log(e)
+                        callback(e, null)
                     }
                 }
-                callback(null, orderId)
-            }else {
-                callback(err, res);
+                console.log(orderId, cartId)
+                cartController.getCartItems(req, null, async (err, res) => {
+                    if(err){
+                        callback(err, res);
+                    }
+                    if(res.rowCount > 0){
+                        for(row in res.rows){
+                            try{
+                            var r = await addToOrder(orderId, res.rows[row])
+                            //deleteCartItem = db.queryAsync('DELETE FROM cart_items WHERE cart_id = $1 AND product_id = $2 RETURNING id AS deleted_id',
+                            //[row.cartId, row.productId]);
+                            //console.log(r)
+                            }catch(e){
+                                callback(e, r);
+                                return;
+                            }
+                        }
+                        cartController.deleteCartItem({session: req.session, body: {cartId: cartId}}, null, (err, res)=> {
+                            if(err) {
+                                callback(err, null);
+                            }else {
+                                callback(null, true);
+                            }
+                        });
+                    }else {
+                        callback(err, res);
+                    }
+                })
             }
-        })
+        })(callback, req, userId)
     }
 }
 

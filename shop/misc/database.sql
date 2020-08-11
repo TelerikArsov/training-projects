@@ -59,7 +59,7 @@ create table cart_items(
     product_id bigint REFERENCES products(id),
     quantity int not null,
     created_date timestamp not null,
-    cart_id bigint REFERENCES cart(id),
+    cart_id bigint REFERENCES cart(id) ON DELETE CASCADE,
     price bigint not null
 );
 
@@ -76,7 +76,8 @@ create table orders(
     paid bigint not null,
     reciever_name text not null,
     address text not null,
-    created_date timestamp not null
+    created_date timestamp not null,
+    orignal_cart_id bigint not null
 );
 
 create table order_items(
@@ -84,7 +85,7 @@ create table order_items(
     product_id bigint REFERENCES products(id),
     quantity int not null,
     created_date timestamp not null,
-    order_id bigint REFERENCES orders(id),
+    order_id bigint REFERENCES orders(id) ON DELETE CASCADE,
     price bigint not null
 );
 

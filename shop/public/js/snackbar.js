@@ -43,6 +43,8 @@ function genericSubmitForm(data, event, form, success){
             data[this.name] = this.value || '';
         }
     });
+    console.log(data)
+    console.log($(form).attr('action'))
     $.ajax({
         data: data,
         type: 'POST',
