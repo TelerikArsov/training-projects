@@ -26,6 +26,9 @@ router.get('/catalog', function(req, res){
     tagCategoryController.getAllCategories(req, res, (err, results) =>
      res.render('catalog', {categories: results.rows}));
 });
+router.get('/orders', function(req, res){
+    res.render('ordersUser');
+})
 
 router.post('/catalog', function(req, res){
     var getPropInfo = req.body.getPropInfo;
@@ -85,6 +88,20 @@ router.get('/catalog/getCart', function(req, res) {
         res.status(500).json({errors: "Not logged in!"});
     }
 });
+
+router.get('/orders/getOrders', function(req, res){
+    if(req.session.user){
+        orderController.getOrders(req, res, (err, result) => {
+            if(err){
+                console.log(err)
+                res.status(500).json({errors: "Oops Cant get cart"});
+            }
+            res.status(200).json({result: result.rows});
+        })
+    }else{
+        res.status(500).json({errors: "Not logged in!"});
+    }
+})
 
 router.post('/catalog/cartChangeQuantity', function(req, res){
     if(req.session.user){

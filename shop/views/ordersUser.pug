@@ -1,0 +1,45 @@
+body
+    block content
+        include mixins/snackbarMixin
+        table#ordersResult.display(table='categories')
+            thead
+                tr
+                th Id
+                th Paid
+                th Reciever Name
+                th address
+            tbody
+    block scripts
+        link(rel='stylesheet', type='text/css', href='https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css')
+        script(type='text/javascript', charset='utf8', src='https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js')
+        script.
+            $(document).ready( function () {
+                var columns = [
+                    { data: 'id' },
+                    { data: 'paid' },
+                    { data: 'reciever_name' },
+                    { data: 'address' }
+                ];
+                var orderTable = $('#ordersResult').DataTable( {
+                    paging: true,
+                    scrollY: 400,
+                    columns: columns
+                });
+                function getOrders(){
+                     $.ajax({
+                        type: 'GET',
+                        url: "/orders/getOrders",
+                        dataType: 'json',
+                        success: function(data){
+                            if(orderTable){
+                                orderTable.clear().draw();
+                                orderTable.rows.add(data['result']).draw();
+                            }
+                        },
+                        error: function(data){
+                            errorHandle(data.responseJSON, null)
+                        }
+                    });
+                }
+                getOrders()
+            });
