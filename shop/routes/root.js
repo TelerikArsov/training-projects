@@ -103,6 +103,21 @@ router.get('/orders/getOrders', function(req, res){
     }
 })
 
+router.get('/orders/getOrder/:id', function(req, res){
+    if(req.session.user){
+        orderController.getOrderItems(req, res, (err, result) => {
+            if(err){
+                console.log(err)
+                res.status(500).json({errors: "Oops Cant get cart"});
+            }else {
+                res.status(200).json({result: result.rows});
+            }
+        })
+    }else{
+        res.status(500).json({errors: "Not logged in!"});
+    }
+})
+
 router.post('/catalog/cartChangeQuantity', function(req, res){
     if(req.session.user){
         cartController.changeQuantity(req, res, (err, result) => {

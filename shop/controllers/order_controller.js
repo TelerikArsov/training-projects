@@ -89,9 +89,9 @@ exports.getOrders = (req, _res, callback) => {
 exports.getOrderItems = (req, _res, callback) => {
     var userId = req.session.userId;
     if(userId){
-        var orderId = req.body.orderId
-        db.query('SELECT oi.id, p.name, p.id as product_id, oi.quantity, oi.price FROM order_items AS oi' 
+        var orderId = req.params.id
+        db.query('SELECT p.name, oi.quantity, oi.price FROM order_items AS oi' 
         + ' LEFT JOIN products AS p ON oi.product_id = p.id' 
-        + ' LEFT JOIN orders AS o on oi.cart_id = o.id WHERE o.user_id = $1 AND o.order_id = $2', [userId, orderId], callback);
+        + ' LEFT JOIN orders AS o on oi.order_id = o.id WHERE o.user_id = $1 AND o.id = $2', [userId, orderId], callback);
     }
 }
