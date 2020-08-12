@@ -38,6 +38,40 @@ router.get('/create', function(req, res){
     res.render('create');
 });
 
+router.get('/orders/getOrders', function(req, res){
+    if(req.session.user && req.session.role == "Admin"){
+        orderController.getOrders(req, res, (err, result) => {
+            if(err){
+                console.log(err)
+                res.status(500).json({errors: "Oops Cant get cart"});
+            }
+            res.status(200).json({result: result.rows});
+        })
+    }else{
+        res.status(500).json({errors: "Not logged in!"});
+    }
+})
+
+router.get('/orders/',  function(req, res){
+    res.render('admin_orders');
+});
+
+
+router.get('/orders/getOrder/:id', function(req, res){
+    if(req.session.user && req.session.role == "Admin"){
+        orderController.getOrderItems(req, res, (err, result) => {
+            if(err){
+                console.log(err)
+                res.status(500).json({errors: "Oops Cant get cart"});
+            }else {
+                res.status(200).json({result: result.rows});
+            }
+        })
+    }else{
+        res.status(500).json({errors: "Not logged in!"});
+    }
+})
+
 router.post('/account', [
     check('username').notEmpty().withMessage('Username is required'),
     check('email').notEmpty().withMessage('Email is required'),

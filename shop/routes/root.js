@@ -89,6 +89,7 @@ router.get('/catalog/getCart', function(req, res) {
     }
 });
 
+
 router.get('/orders/getOrders', function(req, res){
     if(req.session.user){
         orderController.getOrders(req, res, (err, result) => {

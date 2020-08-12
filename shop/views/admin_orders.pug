@@ -1,0 +1,90 @@
+body
+    block content
+        link(rel='stylesheet', type='text/css', href='/stylesheets/create.css')
+        include mixins/snackbarMixin
+        table#ordersResult.display()
+            thead
+                tr
+                th Id
+                th User_Id
+                th Paid
+                th Reciever Name
+                th Address
+            tbody
+        #orderModal.modal
+            .modal-content
+                span.close ×
+                table#orderProducts.display()
+                    thead
+                        tr
+                        th Product Name
+                        th Quantity
+                        th Price
+                    tbody
+    block scripts
+        link(rel='stylesheet', type='text/css', href='https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css')
+        script(type='text/javascript', charset='utf8', src='https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js')
+        script.
+            $(document).ready( function () {
+                var orderTable = $('#ordersResult').DataTable( {
+                    paging: true,
+                    scrollY: 400,
+                    columns: [
+                        { data: 'id' },
+                        { data: 'user_id' },
+                        { data: 'paid' },
+                        { data: 'reciever_name' },
+                        { data: 'address' }
+                    ]
+                });
+                var orderProductsTable = $('#orderProducts').DataTable({
+                    paging: true,
+                    scrollY: 400,
+                    columns: [
+                        { data: 'name'},
+                        { data: 'quantity'},
+                        { data: 'price'}
+                    ]
+                })
+                var orderModal = $('#orderModal')
+                $('.display tbody').on( 'click', function () {
+                    var id = orderTable.row( $(this).children('tr') ).data().id;
+                    console.log(id)
+                    openOrderModal(id);
+                });
+                function openOrderModal(id){
+                    $.ajax({
+                        type: 'GET',
+                        url: "/orders/getOrder/" + id,
+                        dataType: 'json',
+                        success: function(data){
+                            if(orderTable){
+                                orderModal.on('click', '.close', function(){ orderModal.css("display","none");});
+                                orderModal.css("display","block");
+                                orderProductsTable.clear().draw();
+                                orderProductsTable.rows.add(data['result']).draw();
+                            }
+                        },
+                        error: function(data){
+                            errorHandle(data.responseJSON, null)
+                        }
+                    });
+                }
+                function getOrders(){
+                     $.ajax({
+                        type: 'GET',
+                        url: "/orders/getOrders",
+                        dataType: 'json',
+                        success: function(data){
+                            if(orderTable){
+                                orderTable.clear().draw();
+                                orderTable.rows.add(data['result']).draw();
+                            }
+                        },
+                        error: function(data){
+                            errorHandle(data.responseJSON, null)
+                        }
+                    });
+                }
+                getOrders()
+            });

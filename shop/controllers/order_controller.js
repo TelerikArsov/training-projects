@@ -81,17 +81,25 @@ exports.createOrder = (req, _res, callback) => {
 
 exports.getOrders = (req, _res, callback) => {
     var userId = req.session.userId;
-    if(userId){
-        db.query('SELECT id, paid, reciever_name, address FROM orders WHERE user_id = $1', [userId], callback);
+    var query = 'SELECT id, user_id, paid, reciever_name, address FROM orders'
+    if(req.session.role == "admin"){
+        db.query(query, [], callback);
+    }
+    else if(userId){
+        db.query(query + ' WHERE user_id = $1', [userId], callback);
     }
 }
 
 exports.getOrderItems = (req, _res, callback) => {
+    var query = 'SELECT p.name, oi.quantity, oi.price FROM order_items AS oi' 
+    + ' LEFT JOIN products AS p ON oi.product_id = p.id' 
+    + ' LEFT JOIN orders AS o on oi.order_id = o.id WHERE o.id = $1';
+    var orderId = req.params.id
     var userId = req.session.userId;
-    if(userId){
-        var orderId = req.params.id
-        db.query('SELECT p.name, oi.quantity, oi.price FROM order_items AS oi' 
-        + ' LEFT JOIN products AS p ON oi.product_id = p.id' 
-        + ' LEFT JOIN orders AS o on oi.order_id = o.id WHERE o.user_id = $1 AND o.id = $2', [userId, orderId], callback);
+    if(req.session.role == "admin"){
+        db.query(query, [orderId], callback);
+    }
+    else if(userId){
+        db.query(query + " AND o.user_id = $2", [orderId, userId], callback);
     }
 }
