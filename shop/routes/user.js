@@ -4,11 +4,12 @@ const validate = require('../utils/').Validate;
 const userController = require('../controllers/user_controller');
 const verifTokenController = require('../controllers/verifToken_controller');
 const router = express.Router();
-const { check} = require('express-validator');
+const { check } = require('express-validator');
+const user = require('../utils/routes').routes.user
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 
-router.get('/', function(req, res) {
+router.get(user.get.root, function(req, res) {
     if(req.session.user){
         userController.getUser(req, (err, results) => {
             if(err){
@@ -24,16 +25,16 @@ router.get('/', function(req, res) {
     }
 });
 
-router.get('/register', function(req, res){
+router.get(user.get.register, function(req, res){
     res.render('register');
 });
 
-router.get('/login', function(req, res){
+router.get(user.get.login, function(req, res){
     res.render('login');
 });
 
 
-router.post('/', [
+router.post(user.post.updateProfile, [
     check('username').notEmpty().withMessage('Username is required'),
     check('email').notEmpty().withMessage('Email is required'),
     check('email').isEmail().withMessage('Email is not valid'),
@@ -55,7 +56,7 @@ router.post('/', [
     });
 });
 
-router.post('/register', [
+router.post(user.post.register, [
     check('username').notEmpty().withMessage('Username is required'),
     check('email').notEmpty().withMessage('Email is required'),
     check('email').isEmail().withMessage('Email is not valid'),
@@ -111,7 +112,7 @@ router.post('/register', [
     });
 });
 
-router.get('/confirmation/:token', function(req, res) {
+router.get(user.get.confirmationToken, function(req, res) {
     verifTokenController.getToken(req, res, (err, result) => {
         if(err) {
             res.status(500).json({errors: "Cant verify token"});
@@ -121,7 +122,7 @@ router.get('/confirmation/:token', function(req, res) {
                     if(err){
                         res.status(400).json({errors: "User not found"});
                     }else {
-                        res.redirect('/user/login')
+                        res.redirect(user.prefix + root.get.login)
                     }
                 });
             }else{
@@ -131,7 +132,7 @@ router.get('/confirmation/:token', function(req, res) {
     })
 });
 
-router.post('/login', [
+router.post(user.post.login, [
     check('username').notEmpty().withMessage('Username is required'),
     check('pass').notEmpty().withMessage('Password is required')
 ],  function(req, res) {
@@ -159,7 +160,7 @@ router.post('/login', [
 });
 
 
-router.post('/logout', function(req, res){
+router.post(user.post.logout, function(req, res){
     req.session.destroy(function(err){
         if(err){
             console.log(err);

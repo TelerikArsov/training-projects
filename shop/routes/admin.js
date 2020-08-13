@@ -3,6 +3,7 @@ const validate = require('../utils/').Validate;
 const workerController = require('../controllers/worker_controller');
 const productController = require('../controllers/product_controller');
 const tagCategoryController = require('../controllers/tag_category_controller');
+const admin = require('../utils/routes').routes.admin
 const path = require("path");
 const router = express.Router();
 const multer  = require('multer')
@@ -17,28 +18,28 @@ var storage = multer.diskStorage({
 const upload = multer({ storage: storage })
 const { check, validationResult} = require('express-validator');
 
-router.get('/', function(req, res){
+router.get(admin.get.root, function(req, res){
     res.render('admin_panel', {admin: req.session.role == "admin" ? true : false});
 });
 
-router.get('/account', function(req, res){
+router.get(admin.get.account, function(req, res){
     res.render('admin_account');
 });
 
 
-router.get('/login', function(req, res){
+router.get(admin.get.account, function(req, res){
     res.render('login_worker');
 });
 
 
-router.get('/create/worker', function(req, res){
+router.get(admin.get.createWorker, function(req, res){
     res.render('register_worker');
 });
-router.get('/create', function(req, res){
+router.get(admin.get.create, function(req, res){
     res.render('create');
 });
 
-router.get('/orders/getOrders', function(req, res){
+router.get(admin.get.allOrders, function(req, res){
     if(req.session.user && req.session.role == "Admin"){
         orderController.getOrders(req, res, (err, result) => {
             if(err){
@@ -52,12 +53,12 @@ router.get('/orders/getOrders', function(req, res){
     }
 })
 
-router.get('/orders/',  function(req, res){
+router.get(admin.get.order,  function(req, res){
     res.render('admin_orders');
 });
 
 
-router.get('/orders/getOrder/:id', function(req, res){
+router.get(admin.get.orderById, function(req, res){
     if(req.session.user && req.session.role == "Admin"){
         orderController.getOrderItems(req, res, (err, result) => {
             if(err){
@@ -72,7 +73,7 @@ router.get('/orders/getOrder/:id', function(req, res){
     }
 })
 
-router.post('/account', [
+router.post(admin.post.account, [
     check('username').notEmpty().withMessage('Username is required'),
     check('email').notEmpty().withMessage('Email is required'),
     check('email').isEmail().withMessage('Email is not valid'),
@@ -96,7 +97,7 @@ router.post('/account', [
 
 //AUTH
 
-router.post('/login', [
+router.post(admin.post.login, [
     check('username').notEmpty().withMessage('Username is required'),
     check('pass').notEmpty().withMessage('Password is required')
 ],  function(req, res) {
@@ -108,7 +109,7 @@ router.post('/login', [
                 req.session.user = result.rows[0]['username'];
                 req.session.role = "admin";
                 req.session.userId = result.rows[0]['id'];
-                res.status(200).send({result: 'redirect', url:'/admin'})
+                res.status(200).send({result: 'redirect', url: admin.prefix + admin.get.root})
             }else {
                 res.status(500).json({errors: "Failed to authenticate"});
             }
@@ -116,7 +117,7 @@ router.post('/login', [
     });
 });
 
-router.post('/logout', function(req, res){
+router.post(admin.post.logout, function(req, res){
     req.session.destroy(function(err){
         if(err){
             console.log(err);
@@ -207,7 +208,7 @@ var tableActions = {
     }
 };
 
-router.get('/getAll/:table', async function(req, res){
+router.get(admin.get.allInTable, async function(req, res){
     if(tableActions.get[req.params['table']]){
         tableActions.get[req.params['table']](req, res, (err, results) =>{
             if(err) {
@@ -217,23 +218,23 @@ router.get('/getAll/:table', async function(req, res){
         });
     }
 });
-router.post('/delete/:table', async function(req, res){
+router.post(admin.post.deleteTable, async function(req, res){
     await validateReq('table', 'delete', req, res);
 });
 
-router.post('/edit/:table', async function(req, res){
+router.post(admin.post.editTable, async function(req, res){
     await validateReq('table', 'edit', req, res);
 });
 
-router.post('/create/:table' , async function(req, res){
+router.post(admin.post.createTable, async function(req, res){
     await validateReq('table', 'create', req, res);
 });
 
-router.post('/upload/image', upload.single('productImage'), function(req, res){
+router.post(admin.post.upload_image, upload.single('productImage'), function(req, res){
     res.status(200).end();
 });
 
-router.post('/product/ammount', function(req, res) {
+router.post(admin.post.productAmmount, function(req, res) {
     productController.editAmmount(req, res, (err, _results) =>{
         if(err) {
             res.status(500).json({errors: tableActions['error']['products'](err)});
@@ -243,7 +244,7 @@ router.post('/product/ammount', function(req, res) {
     });
 });
 
-router.post('/product/addTag', function(req, res) {
+router.post(admin.post.productAddTag, function(req, res) {
     productController.assignTag(req, res, (err, _results) =>{
         if(err) {
             res.status(500).json({errors: tableActions['error']['products'](err)});
@@ -253,7 +254,7 @@ router.post('/product/addTag', function(req, res) {
     });
 });
 
-router.post('/product/removeTag', function(req, res) {
+router.post(admin.post.productRemoveTag, function(req, res) {
     productController.removeTag(req, res, (err, _results) =>{
         if(err) {
             res.status(500).json({errors: tableActions['error']['products'](err)});

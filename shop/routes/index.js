@@ -4,11 +4,12 @@ const rootRoutes = require('./root')
 const adminRoutes = require('./admin')
 const userRoutes = require('./user')
 const router = express.Router();
+const {routes} = require('../utils/routes')
 
 router.use(bodyParser.json());
 router.use(bodyParser.urlencoded({extended: false}));
-router.use("/", rootRoutes)
-router.use("/admin", adminRoutes)
-router.use("/user", userRoutes)
+router.use(routes.root.prefix, rootRoutes)
+router.use(routes.admin.prefix, adminRoutes)
+router.use(routes.user.prefix, userRoutes)
 
 module.exports = router;
