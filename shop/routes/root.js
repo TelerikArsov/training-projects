@@ -91,7 +91,7 @@ router.get(root.get.cart, function(req, res) {
 });
 
 
-router.get(root.get.orders, function(req, res){
+router.get(root.get.ordersTable, function(req, res){
     if(req.session.user){
         orderController.getOrders(req, res, (err, result) => {
             if(err){

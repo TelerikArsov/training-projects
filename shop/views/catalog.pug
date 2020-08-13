@@ -30,7 +30,7 @@ body
         #orderInfo.modal
             .modal-content
                 span.close ×
-                form#orderInfoForm(action="/catalog/createOrder")
+                form#orderInfoForm(action=publicRoutes.root.createOrder)
                     label(for='address') Address:
                     br
                     input(type='text', name='address', value=username)
@@ -48,6 +48,7 @@ body
         link(href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet")
         script(type='text/javascript', charset='utf8', src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js")
         script.
+            var rootPublicRoutes = !{JSON.stringify(publicRoutes.root)};
             var filterTypes = !{JSON.stringify(filterTypes)};
             $(document).ready( function () {
                 $('.js-example-basic-single').select2({
@@ -104,7 +105,7 @@ body
                     $('#cartList').empty();
                     $.ajax({
                         type: 'GET',
-                        url: '/catalog/getCart',
+                        url: rootPublicRoutes.userCart,
                         success: function(data){
                             $.each(data['result'], function(_, el){
                                 addToCart(el);
@@ -117,7 +118,7 @@ body
                     $.ajax({
                         data: {productId: $(this).attr('productId')},
                         type: 'POST',
-                        url: '/catalog/addToCart',
+                        url: rootPublicRoutes.addToCart,
                         dataType: 'json',
                         success: function(data){
                             showSnackbar("Added to cart", true);
@@ -140,7 +141,7 @@ body
                     $.ajax({
                         data: {productId: $(this).attr('id').substring(3)},
                         type: 'POST',
-                        url: '/catalog/deleteCartItem',
+                        url: rootPublicRoutes.deleteCartItem,
                         dataType: 'json',
                         success: function(data){
                             showSnackbar("Changed quantity", true);
@@ -155,7 +156,7 @@ body
                     $.ajax({
                         data: data,
                         type: 'POST',
-                        url: '/catalog/cartChangeQuantity',
+                        url: rootPublicRoutes.cartChangeQuatity,
                         dataType: 'json',
                         success: function(data){
                             showSnackbar("Changed quantity", true);
@@ -200,7 +201,7 @@ body
                     $.ajax({
                         data: {productId: $(this).attr('productId'), rating: $(this).siblings('input').val()},
                         type: 'POST',
-                        url: '/catalog/rateProduct',
+                        url: rootPublicRoutes.rateProduct,
                         dataType: 'json',
                         success: function(data){
                             showSnackbar("Rated", true);
@@ -215,7 +216,7 @@ body
                     $.ajax({
                         data: filterData,
                         type: 'POST',
-                        url: '/catalog',
+                        url: rootPublicRoutes.filter,
                         dataType: 'json',
                         success: function(data){
                             showSnackbar("Filtered", true);

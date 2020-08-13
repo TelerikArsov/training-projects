@@ -25,6 +25,8 @@ body
         link(rel='stylesheet', type='text/css', href='https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css')
         script(type='text/javascript', charset='utf8', src='https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js')
         script.
+            var adminPublicRoutes = !{JSON.stringify(publicRoutes.admin)};
+            var generateParamUrl = !{generateParamUrl}
             $(document).ready( function () {
                 var orderTable = $('#ordersResult').DataTable( {
                     paging: true,
@@ -55,7 +57,7 @@ body
                 function openOrderModal(id){
                     $.ajax({
                         type: 'GET',
-                        url: "/orders/getOrder/" + id,
+                        url: generateParamUrl(adminPublicRoutes.orderById, {id: id}),
                         dataType: 'json',
                         success: function(data){
                             if(orderTable){
@@ -73,7 +75,7 @@ body
                 function getOrders(){
                      $.ajax({
                         type: 'GET',
-                        url: "/orders/getOrders",
+                        url: adminPublicRoutes.allOrders,
                         dataType: 'json',
                         success: function(data){
                             if(orderTable){

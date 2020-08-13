@@ -2,7 +2,7 @@ body
     include mixins/snackbarMixin
     block content
         include mixins/formsMixin
-        +registerWorkerForm('/admin/create/workers')
+        +registerWorkerForm(publicRoutes.admin.register)
         +snackbar()
     block scripts
         script.

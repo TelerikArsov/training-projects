@@ -3,18 +3,18 @@ html
     title= title
   body
     h1= message
-  a(href='/orders')
+  a(href=publicRoutes.root.orders)
     h2= 'Orders'
-  a(href='/catalog')
+  a(href=publicRoutes.root.catalog)
     h2= 'Catalog'
   if username
     h2= username
-    a(href='/user/')
+    a(href=publicRoutes.user.root)
       h2= 'Account'
-    form(action='/user/logout', method='POST')
+    form(action=publicRoutes.user.logout, method='POST')
       input(type='submit', value='Logout')
   else
-    a(href='/user/register')
+    a(href=publicRoutes.user.registerPage)
       h2= 'register'
-    a(href='/user/login')
+    a(href=publicRoutes.user.loginPage)
       h2= 'login'

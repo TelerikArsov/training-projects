@@ -5,12 +5,12 @@ body
         include mixins/formsMixin
         p Tags
         br
-        +tcForm('/admin/create/tags')
+        +tcForm(#{generateParamUrl(publicRoutes.admin.create, {table: "tag"})})
         button#tags.refresh Refresh
         #tagsEdit.modal
             .modal-content
                 span.close ×
-                +tcForm('/admin/edit/tags')
+                +tcForm(#{generateParamUrl(publicRoutes.admin.edit, {table: "tag"})})
         table#tagsResults.display(table='tags')
             thead
                 tr
@@ -23,12 +23,12 @@ body
             tbody
         p Categories
         br
-        +tcForm('/admin/create/categories')
+        +tcForm(#{generateParamUrl(publicRoutes.admin.create, {table: "categories"})})
         button#categories.refresh Refresh
         #categoriesEdit.modal
             .modal-content
                 span.close ×
-                +tcForm('/admin/edit/categories')
+                +tcForm(#{generateParamUrl(publicRoutes.admin.edit, {table: "categories"})})
         table#categoriesResults.display(table='categories')
             thead
                 tr
@@ -40,12 +40,12 @@ body
             tbody
         p Products
         br
-        +productForm('/admin/create/products')
+        +productForm(#{generateParamUrl(publicRoutes.admin.create, {table: "products"})})
         button#products.refresh Refresh
         #productsEdit.modal
             .modal-content
                 span.close ×
-                +productForm('/admin/edit/products')
+                +productForm(#{generateParamUrl(publicRoutes.admin.edit, {table: "products"})})
         table#productsResults.display(table='products')
             thead
                 tr
@@ -64,11 +64,11 @@ body
         #ammount.modal
             .modal-content
                 span.close ×
-                +productAmmountForm('/admin/product/ammount')
+                +productAmmountForm(publicRoutes.admin.productAmmount)
         #productTags.modal
             .modal-content
                 span.close ×
-                +tagsList('/admin/product/tags')
+                +tagsList()
         +snackbar()
     block scripts
         link(rel='stylesheet', type='text/css', href='https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css')
@@ -76,6 +76,7 @@ body
         link(href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet")
         script(type='text/javascript', charset='utf8', src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js")
         script.
+            var adminPublicRoutes = !{JSON.stringify(publicRoutes.admin)};
             $(document).ready( function () {
                 $('.js-example-basic-single').select2({
                     theme: "classic"
@@ -146,7 +147,7 @@ body
                         $.ajax({
                             data: {id: data['id']},
                             type: 'POST',
-                            url: "/admin/delete/" + $(this).parents('table').attr('table'),
+                            url: generateParamUrl(adminPublicRoutes.delete, {table: $(this).parents('table').attr('table')}),
                             dataType: 'json',
                             success: function(data){
                                 refresh(data['table'])
@@ -165,7 +166,7 @@ body
                      $.ajax({
                         type: 'GET',
                         data: {id: editId},
-                        url: "/admin/getAll/" + tableName,
+                        url: generateParamUrl(adminPublicRoutes.gettAll, {table: tableName}),
                         dataType: 'json',
                         success: function(data){
                             if(callback) {
@@ -218,7 +219,7 @@ body
                     $.ajax({
                         type: 'POST',
                         data: {id: editId, tag_id: tagValue},
-                        url: "/admin/product/addTag",
+                        url: adminPublicRoutes.addTag,
                         dataType: 'json',
                         success: function(data){
                             productTagAction(data, tagsContainer, select);
@@ -236,7 +237,7 @@ body
                     $.ajax({
                         type: 'POST',
                         data: {id: editId, tag_id: tagValue},
-                        url: "/admin/product/removeTag",
+                        url: adminPublicRoutes.removeTag,
                         dataType: 'json',
                         success: function(data){
                             productTagAction(data, tagsContainer, select)
@@ -270,7 +271,7 @@ body
 
                 function uploadFile(formData){
                     $.ajax({
-                        url: '/admin/upload/image',
+                        url: adminPublicRoutes.uploadImage,
                         type: 'POST',
                         data: formData,
                         async: false,

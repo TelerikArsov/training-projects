@@ -2,7 +2,7 @@ body
     include mixins/snackbarMixin
     block content
         include mixins/formsMixin
-        +editUserAccountForm('/user')
+        +editUserAccountForm(publicRoutes.user.root)
         +snackbar()
     block scripts
         script.

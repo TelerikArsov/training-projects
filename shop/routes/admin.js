@@ -230,7 +230,7 @@ router.post(admin.post.createTable, async function(req, res){
     await validateReq('table', 'create', req, res);
 });
 
-router.post(admin.post.upload_image, upload.single('productImage'), function(req, res){
+router.post(admin.post.uploadImage, upload.single('productImage'), function(req, res){
     res.status(200).end();
 });
 

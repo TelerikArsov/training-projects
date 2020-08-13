@@ -4,11 +4,16 @@ const rootRoutes = require('./root')
 const adminRoutes = require('./admin')
 const userRoutes = require('./user')
 const router = express.Router();
-const {routes} = require('../utils/routes')
+const {routes, publicRoutes, generateParamUrl} = require('../utils/routes')
 
 router.use(bodyParser.json());
 router.use(bodyParser.urlencoded({extended: false}));
-router.use(routes.root.prefix, rootRoutes)
+router.use((req, res, next) => {
+    res.locals.publicRoutes = publicRoutes
+    res.locals.generateParamUrl = generateParamUrl
+    next()
+})
+router.use(routes.root.get.root, rootRoutes)
 router.use(routes.admin.prefix, adminRoutes)
 router.use(routes.user.prefix, userRoutes)
 
