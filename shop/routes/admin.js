@@ -27,7 +27,7 @@ router.get(admin.get.account, function(req, res){
 });
 
 
-router.get(admin.get.account, function(req, res){
+router.get(admin.get.login, function(req, res){
     res.render('login_worker');
 });
 

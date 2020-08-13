@@ -116,7 +116,9 @@ exports.publicRoutes = {
 
 exports.generateParamUrl = (url, params) => {
     //naive way for now
-    for(const [paramName, paramValue] in Object.entries(params)){
-        url = url.replace(':' + paramName, paramValue)
+    for(var paramName in params){
+        url = url.replace(':' + paramName, params[paramName])
     }
+    console.log(url)
+    return url
 }
