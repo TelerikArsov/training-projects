@@ -22,10 +22,15 @@ router.use((req, res, next) => {
     next();
 })
 
-router.get(root.get.catalog, function(req, res){
+router.get(root.get.catalog, function(req, res, next){
     //console.log(productController.filterProps);
-    tagCategoryController.getAllCategories(req, res, (err, results) =>
-     res.render('catalog', {categories: results.rows}));
+    tagCategoryController.getAllCategories(req, res, (err, results) => {
+        if(err){
+            next(err)
+        }else{
+            res.render('catalog', {categories: results.rows})
+        }
+    });
 });
 router.get(root.get.orders, function(req, res){
     res.render('ordersUser');

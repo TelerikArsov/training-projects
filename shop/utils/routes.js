@@ -26,7 +26,7 @@ exports.routes = {
         }
     },
     root: {
-        prefix:'/',
+        prefix:'',
         get: {
             root: '/',
             catalog: '/catalog',
