@@ -11,152 +11,77 @@ async function createCart(userId){
     return [err, res];
 }
 
-exports.getCartId =  async (userId) => {
-    var err = null, res = null;
-    var id = null;
-    try{
-        res = await db.asyncQuery('SELECT * FROM CART WHERE user_id = $1', [userId])
-    } catch(e){
-        err = e;
-    }
-    if(err == null && res.rowCount == 1){
-        id = res.rows[0].id;
-    }
-    return id;
-}
-
 async function getCartItemById(id){
-    var err = null, res = null;
-    try{
-        res = await db.asyncQuery('SELECT ci.id, p.name, p.id as product_id, ci.quantity, ci.price FROM cart_items AS ci' 
-        + ' LEFT JOIN products AS p ON ci.product_id = p.id WHERE ci.id = $1', [id])
-    }catch(e){
-        err = e
-    }
-    
-    return [err, res]
+    return await db.asyncQuery('SELECT ci.id, p.name, p.id as product_id, ci.quantity, ci.price FROM cart_items AS ci' 
+        + ' LEFT JOIN products AS p ON ci.product_id = p.id WHERE ci.id = $1', [id]);
 }
 
 async function getProductPrice(id){
-    var err = null, res = null;
-    var price = 1;
-    try{
-        res = await db.asyncQuery('SELECT cost FROM products WHERE id = $1', [id])
-    }catch(e){
-        err = e
-    }
-    if(err == null && res.rowCount == 1){
+    var price = null
+    res = await db.asyncQuery('SELECT cost FROM products WHERE id = $1', [id])
+    if(res.rowCount == 1){
         price = res.rows[0].cost;
     }
     return price;
 }
 
 async function deleteZeroQuantity(id){
-    var err = null, res = null;
-    try{
-        res = await db.asyncQuery('DELETE FROM cart_items WHERE id = $1 AND quantity = 0 RETURNING id AS deleted_id', [id]);
-    }catch(e){
-        err = e;
-    }
-    return [err, res];
+    return await db.asyncQuery('DELETE FROM cart_items WHERE id = $1 AND quantity = 0 RETURNING id AS deleted_id', [id]);
+}
+
+exports.getCartId =  async (userId) => {
+    return db.asyncQuery('SELECT * FROM CART WHERE user_id = $1', [userId])
 }
 
 
-exports.deleteCartItem = async (req, _res, callback) => {
-    var userId = req.session.userId
-    if(userId){
-        var cartId = await this.getCartId(userId);
-        var productId = req.body.productId;
-        if(cartId){
-            db.query('DELETE FROM cart_items WHERE cart_id = $1 AND product_id = $2 RETURNING id AS deleted_id',
-            [cartId, productId], callback);
-        }else{
-            callback(true, null)
-        }
+
+
+exports.deleteCartItem = async (userId, productId) => {
+    var cartId = await this.getCartId(userId);
+    return db.asyncQuery(`DELETE FROM cart_items WHERE cart_id = $1 
+        AND product_id = $2 RETURNING id AS deleted_id`, [cartId, productId]);
+}
+
+exports.changeQuantity = async (userId, productId, incr) => {
+    var cartId = await this.getCartId(userId);
+    const res = await db.asyncQuery(`UPDATE cart_items SET quantity = quantity + $3 
+        WHERE cart_id = $1 AND product_id = $2 RETURNING id`, [cartId, productId, incr])
+    if(res.rowCount <= 0){
+        throw new Error("No such product in cart");
+    }
+    const deleteValue = await deleteZeroQuantity(res.rows[0].id)    
+    if(deleteValue.rowCount > 0){
+        return deleteValue
+    }else{
+        return await getCartItemById(res.rows[0].id);
     }
 }
 
-exports.changeQuantity = async (req, _res, callback) => {
-    var userId = req.session.userId
-    if(userId){
-        var cartId = await this.getCartId(userId);
-        var productId = req.body.productId;
-        var incr = req.body.incr;
-        if(cartId){
-            db.query('UPDATE cart_items SET quantity = quantity + $3 WHERE cart_id = $1 AND product_id = $2 RETURNING id',
-            [cartId, productId, incr], async (err, res) =>  {
-                if(err){
-                    callback(err, res);
-                }
-                if(res.rowCount > 0){
-                    var [deleteErr, deleteValue] = await deleteZeroQuantity(res.rows[0].id)
-                    if(deleteErr || deleteValue.rowCount > 0){
-                        callback(deleteErr, deleteValue);
-                    }else{
-                        callback(...await getCartItemById(res.rows[0].id));
-                    }
-                }else {
-                    callback(true, null)
-                }
-            })
-        }else{
-            callback(true, null)
-        }
+exports.addToCart = async (userId, productId) => {
+    var cartId = await this.getCartId(userId);
+    var productPrice = await getProductPrice(productId)
+    if(!cartId){
+        await createCart(userId);
+        cartId = await this.getCartId(userId);
+    }
+    const updateRes = await db.asyncQuery('UPDATE cart_items SET quantity = quantity + 1 WHERE cart_id = $1 AND product_id = $2 RETURNING id',
+    [cartId, productId])
+    if(updateRes.rowCount == 0){
+        const insertRes = db.asyncQuery(`INSERT INTO cart_items (product_id, quantity, 
+            created_date, cart_id, price) VALUES ($1, $2, $3, $4, $5) RETURNING id`, 
+            [productId, 1, new Date().toISOString(), cartId, productPrice]);
+        return await getCartItemById(insertRes.rows[0].id);
+    }else {
+        return await getCartItemById(updateRes.rows[0].id);
     }
 }
 
-exports.addToCart = async (req, _res, callback) => {
-    var userId = req.session.userId
-    if(userId){
-        var cartId = await this.getCartId(userId);
-        var productId = req.body.productId;
-        if(productId != null) {
-            var productPrice = await getProductPrice(productId)
-            if(!cartId){
-                let [err, res] = await createCart(userId);
-                if(err) {
-                    callback(err, res);
-                }
-                cartId = await this.getCartId(userId);
-            }
-            //can refactor prob just update and if it fails create new entry
-            db.query('UPDATE cart_items SET quantity = quantity + 1 WHERE cart_id = $1 AND product_id = $2 RETURNING id',
-            [cartId, productId], async (err, res) =>  {
-                if(err){
-                    callback(err, res);
-                }
-                if(res.rowCount == 0){
-                    db.query('INSERT INTO cart_items (product_id, quantity, created_date, cart_id, price) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-                    [productId, 1, new Date().toISOString(), cartId, productPrice], async (err, res) => {
-                        if(err){
-                            callback(err, res);
-                        }
-                        callback(...await getCartItemById(res.rows[0].id));
-                    });
-                }else {
-                    callback(...await getCartItemById(res.rows[0].id));
-                }
-            });
-        }else{
-            callback(true, null)
-        }
-    }
-}
-
-exports.getCartItems = (req, _res, callback) => {
-    var userId = req.session.userId;
-    if(userId){
-        db.query('SELECT ci.id, p.name, p.id as product_id, ci.quantity, ci.price FROM cart_items AS ci' 
+exports.getCartItems = (userId) => {
+    return db.asyncQuery('SELECT ci.id, p.name, p.id as product_id, ci.quantity, ci.price FROM cart_items AS ci' 
         + ' LEFT JOIN products AS p ON ci.product_id = p.id' 
-        + ' LEFT JOIN cart AS c on ci.cart_id = c.id WHERE c.user_id = $1', [userId], callback);
-    }
+        + ' LEFT JOIN cart AS c on ci.cart_id = c.id WHERE c.user_id = $1', [userId]);
 }
 
-exports.deleteCartItem = (req, _res, callback) => {
-    var userId = req.session.userId;
-    if(userId){
-        var cartId = req.body.cartId
-        console.log(cartId, userId);
-        db.query('DELETE FROM cart WHERE id = $1 and user_id = $2', [cartId, userId], callback)
-    }
+exports.deleteCart = (userId, cartId) => {
+    return db.asyncQuery('DELETE FROM cart WHERE id = $1 and user_id = $2', [cartId, userId])
 }

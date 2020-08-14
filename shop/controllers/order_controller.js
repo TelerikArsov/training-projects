@@ -3,103 +3,65 @@ var cartController = require('./cart_controller');
 
 async function addToOrder(orderId, data){
     return await db.asyncQuery(`INSERT INTO order_items (product_id, quantity, 
-        created_date, order_id, price) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+        created_date, order_id, price) VALUES ($1, $2, $3, $4, $5)`,
     [data.product_id, data.quantity, new Date().toISOString(), orderId, data.price]);
 }
 
- async function getOrderId(userId, name, address, cartId){
-    var err = null, res = null;
-    var id = null;
-    try{
-        res = await db.asyncQuery(`SELECT * FROM orders WHERE user_id = $1 AND reciever_name = $2 AND address = $3
-        AND orignal_cart_id = $4`, [userId, name, address, cartId])
-    } catch(e){
-        err = e;
+async function getOrderId(userId, name, paid, address, cartId){
+    const result = await db.asyncQuery(`SELECT * FROM orders WHERE user_id = $1 AND reciever_name = $2 
+    AND address = $3 AND orignal_cart_id = $4`, [userId, name, address, cartId]);
+    let orderId = null;
+    if(result.rowCount == 1){
+        orderId = result.rows[0].id;
     }
-    if(err == null && res.rowCount == 1){
-        id = res.rows[0].id;
+    if(!orderId){
+        result = await db.asyncQuery(`INSERT INTO orders (user_id, paid, reciever_name, address,
+             created_date, orignal_cart_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+        [userId, paid, name, address, new Date().toISOString(), cartId]);
+        if(result.rowCount == 1) {
+            orderId = result.rows[0].id;
+        }
     }
-    return id;
+    return orderId;
 }
 
-
-
-exports.createOrder = (req, _res, callback) => {
-    var userId = req.session.userId
-    if(userId){
-        ;(async (callback, req, userId) => {
-            var cartId = await cartController.getCartId(userId)
-            if(cartId){
-                var {paid, name, address} = req.body;
-                var orderId = await getOrderId(userId, name, address, cartId)
-                console.log("FIrst:", orderId, cartId)
-                if(!orderId){
-                    try{
-                        result = await db.asyncQuery(`INSERT INTO orders 
-                        (user_id, paid, reciever_name, address, created_date, orignal_cart_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-                        [userId, paid, name, address, new Date().toISOString(), cartId]);
-                        if(result.rowCount == 1) {
-                            orderId = result.rows[0].id
-                        }
-                    }catch(e){
-                        console.log(e)
-                        callback(e, null)
-                    }
-                }
-                console.log(orderId, cartId)
-                cartController.getCartItems(req, null, async (err, res) => {
-                    if(err){
-                        callback(err, res);
-                    }
-                    if(res.rowCount > 0){
-                        for(row in res.rows){
-                            try{
-                            var r = await addToOrder(orderId, res.rows[row])
-                            //deleteCartItem = db.queryAsync('DELETE FROM cart_items WHERE cart_id = $1 AND product_id = $2 RETURNING id AS deleted_id',
-                            //[row.cartId, row.productId]);
-                            //console.log(r)
-                            }catch(e){
-                                callback(e, r);
-                                return;
-                            }
-                        }
-                        cartController.deleteCartItem({session: req.session, body: {cartId: cartId}}, null, (err, res)=> {
-                            if(err) {
-                                callback(err, null);
-                            }else {
-                                callback(null, true);
-                            }
-                        });
-                    }else {
-                        callback(err, res);
-                    }
-                })
-            }
-        })(callback, req, userId)
+async function addCartItems(userId, name, paid, address, cartId){
+    const orderId = await getOrderId(userId, name, paid, address, cartId);
+    const cartItems = await cartController.getCartItems(userId);
+    if(cartItems.rowCount <= 0){
+        throw new Error("Empty Cart");
     }
+    for(row in cartItems.rows){
+        await addToOrder(orderId, cartItems.rows[row])
+    }
+    await cartController.deleteCart(userId, cartId);
+    return "Created order";
 }
 
-exports.getOrders = (req, _res, callback) => {
-    var userId = req.session.userId;
-    var query = 'SELECT id, user_id, paid, reciever_name, address FROM orders'
-    if(req.session.role == "admin"){
-        db.query(query, [], callback);
-    }
-    else if(userId){
-        db.query(query + ' WHERE user_id = $1', [userId], callback);
-    }
+exports.createOrder = async (userId, paid, name, address) => {
+    const result = await cartController.getCartId(userId);
+    const cartId = result.rows[0].id;
+    return addCartItems(userId, name, paid, address, cartId);
 }
 
-exports.getOrderItems = (req, _res, callback) => {
+exports.getOrders = (userId, role) => {
+    let query = 'SELECT id, user_id, paid, reciever_name, address FROM orders';
+    let params = [];
+    if(userId && role != "admin"){
+        query += ' WHERE user_id = $1';
+        params = [userId,];
+    }
+    return db.asyncQuery(query, params);
+}
+
+exports.getOrderItems = (userId, role, orderId) => {
     var query = 'SELECT p.name, oi.quantity, oi.price FROM order_items AS oi' 
     + ' LEFT JOIN products AS p ON oi.product_id = p.id' 
     + ' LEFT JOIN orders AS o on oi.order_id = o.id WHERE o.id = $1';
-    var orderId = req.params.id
-    var userId = req.session.userId;
-    if(req.session.role == "admin"){
-        db.query(query, [orderId], callback);
+    let params = [orderId]
+    if(userId && role != "admin"){
+        params = [orderId, userId];
+        query += " AND o.user_id = $2";
     }
-    else if(userId){
-        db.query(query + " AND o.user_id = $2", [orderId, userId], callback);
-    }
+    return  db.asyncQuery(query, params);
 }

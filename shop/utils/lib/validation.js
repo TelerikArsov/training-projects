@@ -1,10 +1,10 @@
 const { validationResult} = require('express-validator');
 
-exports.handleValidation = function(req, res, controllerFunc, callback){
-    var errors = validationResult(req).array()
+exports.handleValidation = function(req, res){
+    var errors = validationResult(req).array();
+    var res = null;
     if (errors.length) {
-        res.status(500).json({filterErrors: errors})
-    }else {
-        controllerFunc(req, res, callback)
+        res = errors
     }
+    return res;
 }

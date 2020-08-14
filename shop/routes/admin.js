@@ -3,6 +3,7 @@ const validate = require('../utils/').Validate;
 const workerController = require('../controllers/worker_controller');
 const productController = require('../controllers/product_controller');
 const tagCategoryController = require('../controllers/tag_category_controller');
+const orderController = require('../controllers/order_controller')
 const admin = require('../utils/routes').routes.admin
 const path = require("path");
 const router = express.Router();
@@ -138,28 +139,56 @@ var tableActions = {
     },
     delete: 
     {
-        tags: { func: tagCategoryController.deleteTag, validations: [
-            check('id').notEmpty().withMessage('Id is required')
-        ]},
-        categories: { func: tagCategoryController.deleteCategory, validations: [
-            check('id').notEmpty().withMessage('Id is required')
-        ]},
+        tags: { 
+            func: tagCategoryController.deleteTag, 
+            validations: [
+                check('id').notEmpty().withMessage('Id is required')
+            ],
+            getParams: (args) => {
+                const {id} = args
+                return []
+            }
+        },
+        categories: { 
+            func: tagCategoryController.deleteCategory, 
+            validations: [
+                check('id').notEmpty().withMessage('Id is required')
+            ],
+            getParams: (args) => {
+                const {id} = args
+                return []
+            }
+        },
         products: { func: productController.deleteProduct, validations: [
             check('id').notEmpty().withMessage('Id is required')
         ]}
     },
     edit:
     {
-        tags: { func: tagCategoryController.editTags, validations: [
-            check('name').notEmpty().withMessage('Username is required'),
-            check('color').notEmpty().withMessage('Color is required'),
-            check('id').notEmpty().withMessage('Id is required')
-        ]},
-        categories: { func: tagCategoryController.editCategory, validations: [
-            check('name').notEmpty().withMessage('Username is required'),
-            check('color').notEmpty().withMessage('Color is required'),
-            check('id').notEmpty().withMessage('Id is required')
-        ]},
+        tags: { 
+            func: tagCategoryController.editTags, 
+            validations: [
+                check('name').notEmpty().withMessage('Username is required'),
+                check('color').notEmpty().withMessage('Color is required'),
+                check('id').notEmpty().withMessage('Id is required')
+            ],
+            getParams: (args) => {
+                const {id, name, color, visible} = args;
+                return [id, name, color, visible];
+            }
+        },
+        categories: { 
+            func: tagCategoryController.editCategory, 
+            validations: [
+                check('name').notEmpty().withMessage('Username is required'),
+                check('color').notEmpty().withMessage('Color is required'),
+                check('id').notEmpty().withMessage('Id is required')
+            ],
+            getParams: (args) => {
+                const {id, name, color, visible} = args;
+                return [id, name, color, visible];
+            }
+        },
         products: { func: productController.editProduct, validations:[
             check('name').notEmpty().withMessage('Username is required'),
             check('manifacturer').notEmpty().withMessage('Manufacturer is required'),
@@ -171,14 +200,28 @@ var tableActions = {
     },
     create:
     {
-        tags: { func: tagCategoryController.createTag, validations: [
-            check('name').notEmpty().withMessage('Username is required'),
-            check('color').notEmpty().withMessage('Color is required')
-        ]},
-        categories: { func: tagCategoryController.createCategory, validations: [
-            check('name').notEmpty().withMessage('Username is required'),
-            check('color').notEmpty().withMessage('Color is required')
-        ]},
+        tags: { 
+            func: tagCategoryController.createTag, 
+            validations: [
+                check('name').notEmpty().withMessage('Username is required'),
+                check('color').notEmpty().withMessage('Color is required')
+            ],
+            getParams: (args) => {
+                const {name, color, visible} = args
+                return [name, color, visible]
+            }
+        },
+        categories: { 
+            func: tagCategoryController.createCategory, 
+            validations: [
+                check('name').notEmpty().withMessage('Username is required'),
+                check('color').notEmpty().withMessage('Color is required')
+            ],
+            getParams: (args) => {
+                const {name, color, visible} = args
+                return [name, color, visible]
+            }
+        },
         products: { func: productController.createProduct, validations:[
             check('name').notEmpty().withMessage('Username is required'),
             check('manifacturer').notEmpty().withMessage('Manufacturer is required'),
@@ -199,6 +242,7 @@ var tableActions = {
             })
         ]}
     },
+    //remove altogether soon
     error:
     {
         tags: tagCategoryController.handleTagError,
@@ -208,26 +252,25 @@ var tableActions = {
     }
 };
 
-router.get(admin.get.allInTable, async function(req, res){
+router.get(admin.get.allInTable, function(req, res, next){
     if(tableActions.get[req.params['table']]){
-        tableActions.get[req.params['table']](req, res, (err, results) =>{
-            if(err) {
-                console.log(err)
-            }
-            res.json({table: req.params['table'], result: results.rows});
-        });
+        tableActions.get[req.params['table']]()
+        .then(result => res.json({table: req.params['table'], result: result.rows}))
+        .catch(err => next(err));
+    }else {
+        res.status(500).json({errors: "No such table"});
     }
 });
-router.post(admin.post.deleteTable, async function(req, res){
-    await validateReq('table', 'delete', req, res);
+router.post(admin.post.deleteTable, function(req, res, next){
+    validateReq('table', 'delete', req, res, next);
 });
 
-router.post(admin.post.editTable, async function(req, res){
-    await validateReq('table', 'edit', req, res);
+router.post(admin.post.editTable, function(req, res, next){
+    validateReq('table', 'edit', req, res, next);
 });
 
-router.post(admin.post.createTable, async function(req, res){
-    await validateReq('table', 'create', req, res);
+router.post(admin.post.createTable, function(req, res, next){
+    validateReq('table', 'create', req, res, next);
 });
 
 router.post(admin.post.uploadImage, upload.single('productImage'), function(req, res){
@@ -264,28 +307,48 @@ router.post(admin.post.productRemoveTag, function(req, res) {
     });
 });
 
-async function validateReq(paramName, type, req, res){
+function ValidateError(message, errors){
+    var error = Error.call(this, message);
+    this.name = 'ValidateError';
+    this.message = error.message;
+    this.stack = error.stack;
+    this.errors = errors;
+}
+ValidateError.prototype = Object.create(Error.prototype)
+ValidateError.prototype.constructor = ValidateError
+
+function validateReq(paramName, type, req, res, next){
     if(tableActions[type][req.params[paramName]]){
-        await Promise.all(tableActions[type][req.params[paramName]]
+        Promise.all(tableActions[type][req.params[paramName]]
             .validations.map(async (element) => {
-            await element.run(req)
-        }));
-        var errors = validationResult(req).array()
-        if (errors.length) {
-            res.status(500).json({filterErrors: errors})
-        }else {
-            tableActions[type][req.params[paramName]].func(req, res, (err, results) =>{
-                if(err) {
-                    res.status(500).json({errors: tableActions['error'][req.params[paramName]](err)});
-                }else {
-                    var id = null;
-                    if(results.rowCount == 1){
-                        id = results.rows[0].id;
-                    }
-                    res.json({id: id, table: req.params[paramName]})
-                }
-            });
-        }
+                await element.run(req)
+            })
+        ).then(() => {
+            let errors = validationResult(req).array();
+            if (errors.length){
+                throw new ValidateError('Validation error', errors)
+            }
+            var action = tableActions[type][req.params[paramName]]
+            return action.func(action.getParams(req.body))
+        }).then(result => {
+            let id = undefined
+            if(result.rowCount == 1){
+                id = result.rows[0].id;
+            }
+            res.status(200).json({id: id, table: req.params[paramName]})
+        }, err => {
+            res.status(500).json({filterErrors: err.errors})
+            return ValidateError('Already handled', err.errors);
+        })
+        .catch(err => {
+            if(err instanceof ValidateError)
+            {
+                console.error(err.message, err.errors);
+            }else{
+                next(err)
+            }
+            //res.status(500).json({errors: tableActions['error'][req.params[paramName]](err)});
+        });
     }
 }
 

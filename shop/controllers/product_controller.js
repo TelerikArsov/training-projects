@@ -18,31 +18,9 @@ var filterProps = {
         type: this.types.multiDropdown, fetchQuery: "SELECT DISTINCT t.name FROM products AS p LEFT JOIN product_tags AS pt ON pt.product_id = p.id LEFT JOIN tags AS t ON t.id = pt.tag_id WHERE p.category_id IN (SELECT id FROM categories WHERE name = $1)"}
 };
 
-
-exports.handleError = (err) => {
-    var errorMsg = '';
-    switch(err.code){
-        case '23505':
-            errorMsg = "Name already in use";
-            break;
-        default:
-            errorMsg = "Unknown server error";
-    }
-    return errorMsg
+async function fetchPropBy(query, leadingValue){
+   return await db.asyncQuery(query, [leadingValue]);
 }
-
-exports.filterProps = Object.assign({}, ...Object.entries(filterProps)
-    .map(([k, v]) => {
-        if(!v['invisible']){
-            return ({[k]: {
-                name: k[0].toUpperCase() + k.slice(1), 
-                type: v['type'],
-                fetchQuery: v['fetchQuery']
-            }});
-        }
-    }));
-exports.fetchableTypes = [
-    this.types.range, this.types.dropdown, this.types.multiDropdown]
 
 
 function addAmmount(ammount, product_id, callback, result) {
@@ -56,6 +34,32 @@ function addAmmount(ammount, product_id, callback, result) {
         });
     }
 }
+
+
+exports.handleError = (err) => {
+    var errorMsg = '';
+    switch(err.code){
+        case '23505':
+            errorMsg = "Name already in use";
+            break;
+        default:
+            errorMsg = "Unknown server error";
+    }
+    return errorMsg
+}
+
+exports.filterProps = Object.assign({}, ...Object.entries(filterProps).map(([k, v]) => {
+        if(!v['invisible']){
+            return ({[k]: {
+                name: k[0].toUpperCase() + k.slice(1), 
+                type: v['type'],
+                fetchQuery: v['fetchQuery']
+            }});
+        }
+    }));
+exports.fetchableTypes = [
+    this.types.range, this.types.dropdown, this.types.multiDropdown
+]
 
 exports.editAmmount = (req, _res, callback) => {
     if(req.session.user && req.session.role == "admin"){
@@ -95,15 +99,8 @@ exports.getAllProducts = (req, res, callback) => {
     db.query(query, callback);
 }
 
-exports.getProductsByFilter = (req, res, callback) => {
-    if (req.body) {
-        for (var key in req.body) {
-            if (/\[\]$/.test(key)) {
-            req.body[key.replace(/\[\]$/, '')] = req.body[key] || [];
-            delete req.body[key];
-            }
-        }
-    }
+exports.getProductsByFilter = async (filters, role, getPropInfo) => {
+    
     //console.log(req.body)
     var query = `SELECT p.id, p.name, manifacturer, description, cost, c.name AS category, AVG(pr.rating) AS product_rating,
     p.visible FROM products AS p
@@ -112,37 +109,37 @@ exports.getProductsByFilter = (req, res, callback) => {
     LEFT JOIN categories AS c ON c.id = p.category_id
     LEFT JOIN product_ratings AS pr on p.id = pr.product_id`;
     var whereSet = false;
-    if(req.session.role != "admin") {
+    if(role != "admin") {
         query += ' WHERE p.visible = TRUE';
         whereSet = true;
     }
     var count = 1;
     var intersection = 0;
-    for(var prop in req.body) {
-        if(filterProps[prop] && req.body[prop] != ''){
+    for(let filter in filters) {
+        if(filterProps[filter] && req.body[filter] != ''){
             if(!whereSet){
                 query += ' WHERE ';
                 whereSet = true;
             }else {
                 query += ' AND ';
             }
-            if(filterProps[prop]['type'] == this.types.text || filterProps[prop]['type'] == this.types.dropdown){
-                query += `${filterProps[prop]['dbQuery']} LIKE '%' || $${count} || '%'`;
-            }else if(filterProps[prop]['type'] == this.types.exactText){
-                query += `${filterProps[prop]['dbQuery']} = $${count}`;
-            }else if(filterProps[prop]['type'] == this.types.range){
-                query += `${filterProps[prop]['dbQuery']} >= $${count} AND `;
+            if(filterProps[filter]['type'] == this.types.text || filterProps[filter]['type'] == this.types.dropdown){
+                query += `${filterProps[filter]['dbQuery']} LIKE '%' || $${count} || '%'`;
+            }else if(filterProps[filter]['type'] == this.types.exactText){
+                query += `${filterProps[filter]['dbQuery']} = $${count}`;
+            }else if(filterProps[filter]['type'] == this.types.range){
+                query += `${filterProps[filter]['dbQuery']} >= $${count} AND `;
                 count++;
-                query += `${filterProps[prop]['dbQuery']} <= $${count}`;
-            }else if(filterProps[prop]['type'] == this.types.multiDropdown){
-                query += `${filterProps[prop]['dbQuery']}`;
-                for(let i = 0; i < (Array.isArray(req.body[prop]) ? req.body[prop].length - 1 : 0); i++){
+                query += `${filterProps[filter]['dbQuery']} <= $${count}`;
+            }else if(filterProps[filter]['type'] == this.types.multiDropdown){
+                query += `${filterProps[filter]['dbQuery']}`;
+                for(let i = 0; i < (Array.isArray(req.body[filter]) ? req.body[filter].length - 1 : 0); i++){
                     query += ` $${count}, `;
                     count++;
                 }
                 query += `$${count}))`;
                 //should be option from req body
-                intersection = (Array.isArray(req.body[prop]) ? req.body[prop].length : 1);
+                intersection = (Array.isArray(req.body[filter]) ? req.body[filter].length : 1);
             }
             count++;
         }
@@ -155,26 +152,27 @@ exports.getProductsByFilter = (req, res, callback) => {
         data.push(intersection)
     }
     query += ';';
-    /*
-    console.log(req.body)
-    console.log(query);
-    console.log(data);
-    */
-    //console.log(query, Object.values(req.body).filter(
-        //function (el) { return el != '';}).reduce((acc, val) => acc.concat(val), []))
-    db.query(query, data,
-    callback);
-}
 
-exports.fetchPropBy = async (query, leadingValue) => {
-    var err = null;
-    var rows = null;
-    try{
-        rows = await db.asyncQuery(query, [leadingValue]);
-    }catch(e){
-        err = e;
+    let result = {}
+    result.rows = (await db.asyncQuery(query, data)).rows;
+    result.propInfo = {};
+
+    if(getPropInfo){
+        for(let filter in this.filterProps){
+            if(this.fetchableTypes.includes(this.filterProps[filter]['type'])) {
+                try{
+                    res = await fetchPropBy(this.filterProps[filter]['fetchQuery'],
+                            props.category);
+                    result.propInfo[filter] = {};
+                    result.propInfo[filter]['type'] = this.filterProps[filter]['type'];
+                    result.propInfo[filter]['values'] = res.rows;
+                }catch(err) {
+                    result.propInfo[filter]['err'] = err;
+                }
+            }
+        }
     }
-    return [err, rows];
+    return result
 }
 
 exports.assignTag = (req, _res, callback) => {
@@ -223,32 +221,22 @@ exports.editProduct = (req, res, callback) => {
 }
 
 async function ratingExists(userId, product_id){
-    var err = null, res = null;
-    var exists = null;
-    try{
-        res = await db.asyncQuery(`SELECT * FROM product_ratings WHERE 
+    let exists = null;
+    res = await db.asyncQuery(`SELECT * FROM product_ratings WHERE 
             user_id = $1 AND product_id = $2`, [userId, product_id])
-    } catch(e){
-        err = e;
-    }
-    if(err == null && res.rowCount == 1){
+    if(res.rowCount == 1){
         exists = res.rows[0].id;
     }
     return exists;
 }
 
-exports.addRating = async (req, res, callback) => {
-    var userId = req.session.userId;
-    var {productId, rating} = req.body
-    if(userId){
-        var exists = await ratingExists(userId, productId);
-        if(exists){
-            db.query(`UPDATE product_ratings SET rating = $3 WHERE user_id = $1 
-                AND product_id = $2`, [userId, productId, rating], callback);
-        }else{
-            db.query(`INSERT INTO product_ratings (user_id, product_id, rating)
-                VALUES ($1, $2, $3)`, [userId, productId, rating], callback);
-        }
-        
+exports.addRating = async (userId, productId, rating) => {
+    var exists = await ratingExists(userId, productId);
+    var query = `INSERT INTO product_ratings (user_id, product_id, rating)
+    VALUES ($1, $2, $3)`
+    if(exists){
+        query = `UPDATE product_ratings SET rating = $3 WHERE user_id = $1 
+        AND product_id = $2`
     }
+    return db.asyncQuery(query, [userId, productId, rating]);
 }

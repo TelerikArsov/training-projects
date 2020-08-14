@@ -119,6 +119,5 @@ exports.generateParamUrl = (url, params) => {
     for(var paramName in params){
         url = url.replace(':' + paramName, params[paramName])
     }
-    console.log(url)
     return url
 }

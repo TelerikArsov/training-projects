@@ -1,21 +1,37 @@
 var db = require('./db');
-
-function create(table, args, callback){
-    db.query('INSERT INTO ' + table + ' (name, color, visible) VALUES ($1, $2, $3) RETURNING id',
-    args, callback);
+/**
+ * @param {string} table    - Name of the edited table
+ * @param {Array} args      - Array containing [name, color, visible]
+ * @returns {Promise}       Promise containing id
+ */
+function create(table, args){
+    return db.asyncQuery('INSERT INTO ' + table + ' (name, color, visible) VALUES ($1, $2, $3) RETURNING id',
+    args);
 }
-function getAll(table, callback){
-    db.query('Select * FROM ' + table +' ;', callback);
+/**
+ * @param {string} table    - Name of the edited table
+ * @returns {Promise}       Promise containing all the entries in the given table
+ */
+function getAll(table){
+    return db.asyncQuery('Select * FROM ' + table +' ;');
 }
-
-function deleteTC(table, args, callback){
-    db.query('DELETE FROM ' + table + ' WHERE id = $1',
-    args, callback);
+/**
+ * @param {string} table    - Name of the edited table
+ * @param {Array} args      - Array containing [name, color, visible]
+ * @returns {Promise}       Promise containing id
+ */
+function deleteTC(table, args){
+    return db.asyncQuery('DELETE FROM ' + table + ' WHERE id = $1 RETURNING id',
+    args);
 }
-
-function edit(table, args, callback){
-    db.query('UPDATE ' + table + ' SET name = $2, color = $3, visible = $4 WHERE id = $1',
-    args, callback);
+/**
+ * @param {string} table    - Name of the edited table
+ * @param {Array} args      - Array containing [id, name, color, visible]
+ * @returns {Promise}       Promise containing id
+ */
+function edit(table, args){
+    return db.query('UPDATE ' + table + ' SET name = $2, color = $3, visible = $4 WHERE id = $1 RETURNING id',
+    args);
 }
 
 exports.handleTagError = (err) => {
@@ -41,53 +57,78 @@ exports.handleCategoryError = (err) => {
     }
     return errorMsg
 }
-
-exports.createTag = (req, _res, callback) => {
-    if(req.session.user && req.session.role == "admin"){
-        const { name, color, visible } = req.body;
-        create('tags', [name, color, visible], callback);
-    }
+/**
+ * @param {string} name     - The tag's name
+ * @param {string} color    - Color of the tag
+ * @param {boolean} visible - whether the tag is visible to the user
+ * @returns {Promise}       Promise containing the id of the created tag
+ */
+exports.createTag = (name, color, visible) => {
+    // MOVE TO MAIN METHOS
+    //if(req.session.user && req.session.role == "admin"){
+    return create('tags', [name, color, visible]);
 }
-
-exports.deleteTag = (req, _res, callback) => {
-    if(req.session.user && req.session.role == "admin"){
-        const { id } = req.body;
-        deleteTC('tags', [id], callback);
-    }
+/**
+ * @param {Number} id       - The tag's Id
+ * @returns {Promise}       Promise containing the id of the deleted tag
+ */
+exports.deleteTag = (id) => {
+   // if(req.session.user && req.session.role == "admin"){
+    return deleteTC('tags', [id]);
+    //}
 }
-
-exports.getAllTags = (_req, _res, callback) =>{
-    getAll('tags', callback);
+/**
+ * @returns {Promise}       Promise containing all the entries in tags table
+ */
+exports.getAllTags = () =>{
+    return getAll('tags');
 }
-
-exports.editTags = (req, _res, callback) => {
-    if(req.session.user && req.session.role == "admin"){
-        const { id, name, color, visible } = req.body;
-        edit('tags', [id, name, color, visible], callback);
-    }
+/**
+ * @param {Number} id       - The tag's Id
+ * @param {string} name     - The tag name
+ * @param {string} color    - Color of the tag
+ * @param {boolean} visible - whether the tag is visible to the user
+ * @returns {Promise}       Promise containing the id of the edited tag
+ */
+exports.editTags = (id, name, color, visible) => {
+    //if(req.session.user && req.session.role == "admin"){
+    return edit('tags', [id, name, color, visible]);
+    //}
 }
-
-exports.createCategory = (req, _res, callback) => {
-    if(req.session.user && req.session.role == "admin"){
-        const { name, color, visible } = req.body;
-        create('categories', [name, color, visible], callback);
-    }
+/**
+ * @param {string} name     - The category's name
+ * @param {string} color    - Color of the category
+ * @param {boolean} visible - whether the category is visible to the user
+ * @returns {Promise}       Promise containing the id of the created category
+ */
+exports.createCategory = (name, color, visible) => {
+    //if(req.session.user && req.session.role == "admin"){
+    return create('categories', [name, color, visible]);
+    //}
 }
-
-exports.deleteCategory = (req, _res, callback) => {
-    if(req.session.user && req.session.role == "admin"){
-        const { id } = req.body;
-        deleteTC('categories', [id], callback);
-    }
+/**
+ * @param {Number} id       - The category's Id
+ * @returns {Promise}       Promise containing the id of the deleted category
+ */
+exports.deleteCategory = (id) => {
+    //if(req.session.user && req.session.role == "admin"){
+    return deleteTC('categories', [id]);
+   // }
 }
-
-exports.getAllCategories = (_req, _res, callback) =>{
-    getAll('categories', callback);
+/**
+ * @returns {Promise}       Promise containing all the entries in categories table
+ */
+exports.getAllCategories = () =>{
+    return getAll('categories');
 }
-
-exports.editCategory = (req, _res, callback) => {
-    if(req.session.user && req.session.role == "admin"){
-        const { id, name, color, visible } = req.body;
-        edit('categories', [id, name, color, visible], callback);
-    }
+/**
+ * @param {Number} id       - The categorys' Id
+ * @param {string} name     - The category's name
+ * @param {string} color    - Color of the category
+ * @param {boolean} visible - whether the category is visible to the user
+ * @returns {Promise}       Promise containing the id of the edited category
+ */
+exports.editCategory = (id, name, color, visible) => {
+    return edit('categories', [id, name, color, visible]);
+    //}
 }
