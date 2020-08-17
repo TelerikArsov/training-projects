@@ -363,9 +363,8 @@ function validateReq(paramName, type, req, res, next){
             }
             res.status(200).json({result: id || result, table: req.params[paramName]})
         }, err => {
-            console.log(err)
-            res.status(500).json({filterErrors: err.error})
-            throw ValidateError('Already handled', err.error);
+            res.status(500).json({errors: "Somethings wrong I can feel it"});
+            throw new ValidateError('Already handled', err);
         })
         .catch(err => {
             if(err instanceof ValidateError)

@@ -28,19 +28,6 @@ function addAmmount(ammount, product_id, callback, result) {
         [product_id, ammount]);
 }
 
-
-exports.handleError = (err) => {
-    var errorMsg = '';
-    switch(err.code){
-        case '23505':
-            errorMsg = "Name already in use";
-            break;
-        default:
-            errorMsg = "Unknown server error";
-    }
-    return errorMsg
-}
-
 exports.filterProps = Object.assign({}, ...Object.entries(filterProps).map(([k, v]) => {
         if(!v['invisible']){
             return ({[k]: {

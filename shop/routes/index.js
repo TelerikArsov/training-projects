@@ -1,5 +1,6 @@
 const express = require("express");
 const bodyParser = require('body-parser');
+var methodOverride = require('method-override')
 const rootRoutes = require('./root')
 const adminRoutes = require('./admin')
 const userRoutes = require('./user')
@@ -16,5 +17,11 @@ router.use((req, res, next) => {
 router.use(routes.root.get.root, rootRoutes)
 router.use(routes.admin.prefix, adminRoutes)
 router.use(routes.user.prefix, userRoutes)
+router.use(methodOverride())
+router.use(function (err, req, res, next) {
+    console.error(err.stack)
+    res.status(500).json({errors: err.message});
+    next(err)
+})
 
 module.exports = router;

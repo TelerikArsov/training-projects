@@ -33,30 +33,6 @@ function edit(table, args){
     return db.query('UPDATE ' + table + ' SET name = $2, color = $3, visible = $4 WHERE id = $1 RETURNING id',
     args);
 }
-
-exports.handleTagError = (err) => {
-    var errorMsg = '';
-    switch(err.code){
-        case '23505':
-            errorMsg = "Name already in use";
-            break;
-        default:
-            errorMsg = "Unknown server error";
-    }
-    return errorMsg
-}
-
-exports.handleCategoryError = (err) => {
-    var errorMsg = '';
-    switch(err.code){
-        case '23505':
-            errorMsg = "Name already in use";
-            break;
-        default:
-            errorMsg = "Unknown server error";
-    }
-    return errorMsg
-}
 /**
  * @param {string} name     - The tag's name
  * @param {string} color    - Color of the tag

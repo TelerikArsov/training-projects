@@ -1,17 +1,5 @@
 var db = require('./db');
 
-exports.handleError = (err) => {
-    var errorMsg = '';
-    switch(err.code){
-        case '23505':
-            errorMsg = "Username or email already in use";
-            break;
-        default:
-            errorMsg = "Unknown server error";
-    }
-    return errorMsg
-}
-
 exports.createWorker = (username, email, pass) => {
     return db.asyncQuery(`INSERT INTO workers (username, email, password, created_on) 
         VALUES ($1, $2, $3, $4) RETURNING id`, [username, email, pass, new Date().toISOString()]);
