@@ -102,7 +102,7 @@ exports.getProductsByFilter = async (filters, role, getPropInfo) => {
     var count = 1;
     var intersection = 0;
     for(let filter in filters) {
-        if(filterProps[filter] && req.body[filter] != ''){
+        if(filterProps[filter] && filters[filter] != ''){
             if(!whereSet){
                 query += ' WHERE ';
                 whereSet = true;
@@ -119,18 +119,18 @@ exports.getProductsByFilter = async (filters, role, getPropInfo) => {
                 query += `${filterProps[filter]['dbQuery']} <= $${count}`;
             }else if(filterProps[filter]['type'] == this.types.multiDropdown){
                 query += `${filterProps[filter]['dbQuery']}`;
-                for(let i = 0; i < (Array.isArray(req.body[filter]) ? req.body[filter].length - 1 : 0); i++){
+                for(let i = 0; i < (Array.isArray(filters[filter]) ? filters[filter].length - 1 : 0); i++){
                     query += ` $${count}, `;
                     count++;
                 }
                 query += `$${count}))`;
                 //should be option from req body
-                intersection = (Array.isArray(req.body[filter]) ? req.body[filter].length : 1);
+                intersection = (Array.isArray(filters[filter]) ? filters[filter].length : 1);
             }
             count++;
         }
     }
-    var data = Object.values(req.body).filter(
+    var data = Object.values(filters).filter(
         function (el) { return el != '';}).reduce((acc, val) => acc.concat(val), []);
     query += ' GROUP BY p.id, c.name';
     if(intersection) {
@@ -148,7 +148,7 @@ exports.getProductsByFilter = async (filters, role, getPropInfo) => {
             if(this.fetchableTypes.includes(this.filterProps[filter]['type'])) {
                 try{
                     res = await fetchPropBy(this.filterProps[filter]['fetchQuery'],
-                            props.category);
+                            filters.category);
                     result.propInfo[filter] = {};
                     result.propInfo[filter]['type'] = this.filterProps[filter]['type'];
                     result.propInfo[filter]['values'] = res.rows;

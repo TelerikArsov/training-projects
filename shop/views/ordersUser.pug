@@ -49,7 +49,6 @@ body
                 var orderModal = $('#orderModal')
                 $('.display tbody').on( 'click', function () {
                     var id = orderTable.row( $(this).children('tr') ).data().id;
-                    console.log(id)
                     openOrderModal(id);
                 });
                 function openOrderModal(id){

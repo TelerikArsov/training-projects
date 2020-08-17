@@ -24,8 +24,8 @@ router.use((req, res, next) => {
 
 router.get(root.get.catalog, function(req, res, next){
     //console.log(productController.filterProps);
-    tagCategoryController.getAllCategories(req, res)
-        .then(result => res.render('catalog', {categories: result}))
+    tagCategoryController.getAllCategories()
+        .then(result => res.render('catalog', {categories: result.rows}))
         .catch(err => next(err));
 });
 router.get(root.get.orders, function(_req, res){
@@ -44,14 +44,15 @@ router.post(root.post.catalog, function(req, res, next){
         }
     }
     productController.getProductsByFilter(req.body, req.session.role, getPropInfo)
-    .then(result => {  
-        res.json({result: result.rows, propInfo: result.propInfo})
-    }).catch(err => next(err))
+        .then(result => {  
+            res.json({result: result.rows, propInfo: result.propInfo})
+        })
+        .catch(err => next(err))
 });
 
 router.post(root.post.addToCart, function(req, res, next){
     if(req.session.user){
-        cartController.addToCart(req, res,)
+        cartController.addToCart(req.session.userId, req.body.productId)
             .then(result => res.status(200).json({result: result.rows[0]}))
             .catch(err => next(err))
     }else {
@@ -82,7 +83,7 @@ router.get(root.get.ordersTable, function(req, res, next){
 
 router.get(root.get.order, function(req, res, next){
     if(req.session.user){
-        orderController.getOrderItems(req.session.userId, req.session.role)
+        orderController.getOrderItems(req.session.userId, req.session.role, req.params.id)
             .then(result => res.status(200).json({result: result.rows}))
             .catch(err => next(err));
     }else{
@@ -102,7 +103,7 @@ router.post(root.post.cartChangeQuantity, function(req, res, next){
 
 router.post(root.post.deleteCartItem, function(req, res, next){
     if(req.session.user){
-        cartController.deleteCartItem(req.session.userId, res.body.productId)
+        cartController.deleteCartItem(req.session.userId, req.body.productId)
             .then(result => res.status(200).json({result: result.rows}))
             .catch(err => next(err));
     }else{

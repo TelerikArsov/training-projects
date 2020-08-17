@@ -1,9 +1,13 @@
 var db = require('./db');
 
 async function createCart(userId){
-      
-    return await db.asyncQuery('INSERT INTO cart (user_id, created_date) VALUES ($1, $2)',
+    let res = await db.asyncQuery('INSERT INTO cart (user_id, created_date) VALUES ($1, $2) RETURNING id',
         [userId, new Date().toISOString()]);
+    let id = undefined
+    if(res.rowCount == 1){
+        id = res.rows[0].id;
+    }
+    return id;
 }
 
 async function getCartItemById(id){
@@ -20,12 +24,17 @@ async function getProductPrice(id){
     return price;
 }
 
-async function deleteZeroQuantity(id){
-    return await db.asyncQuery('DELETE FROM cart_items WHERE id = $1 AND quantity = 0 RETURNING id AS deleted_id', [id]);
+function deleteZeroQuantity(id){
+    return db.asyncQuery('DELETE FROM cart_items WHERE id = $1 AND quantity = 0 RETURNING id AS deleted_id', [id]);
 }
 
 exports.getCartId =  async (userId) => {
-    return db.asyncQuery('SELECT * FROM CART WHERE user_id = $1', [userId])
+    let res = await db.asyncQuery('SELECT id FROM cart WHERE user_id = $1', [userId]);
+    let id = undefined
+    if(res.rowCount == 1){
+        id = res.rows[0].id;
+    }
+    return id;
 }
 
 
@@ -56,13 +65,12 @@ exports.addToCart = async (userId, productId) => {
     var cartId = await this.getCartId(userId);
     var productPrice = await getProductPrice(productId)
     if(!cartId){
-        await createCart(userId);
-        cartId = await this.getCartId(userId);
+        cartId = await createCart(userId);
     }
     const updateRes = await db.asyncQuery('UPDATE cart_items SET quantity = quantity + 1 WHERE cart_id = $1 AND product_id = $2 RETURNING id',
     [cartId, productId])
     if(updateRes.rowCount == 0){
-        const insertRes = db.asyncQuery(`INSERT INTO cart_items (product_id, quantity, 
+        const insertRes = await db.asyncQuery(`INSERT INTO cart_items (product_id, quantity, 
             created_date, cart_id, price) VALUES ($1, $2, $3, $4, $5) RETURNING id`, 
             [productId, 1, new Date().toISOString(), cartId, productPrice]);
         return await getCartItemById(insertRes.rows[0].id);

@@ -100,7 +100,7 @@ exports.publicRoutes = {
         filter: this.routes.root.prefix + this.routes.root.post.catalog,
         catalog: this.routes.root.prefix + this.routes.root.get.catalog,
         orders: this.routes.root.prefix + this.routes.root.get.orders,
-        getOrderById: this.routes.root.prefix + this.routes.root.get.orderById,
+        getOrderById: this.routes.root.prefix + this.routes.root.get.order,
         ordersForUser: this.routes.root.prefix + this.routes.root.get.ordersTable
     },
     user: {

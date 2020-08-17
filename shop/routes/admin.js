@@ -354,16 +354,18 @@ function validateReq(paramName, type, req, res, next){
                 throw new ValidateError('Validation error', errors)
             }
             var action = tableActions[type][req.params[paramName]]
-            return action.func(action.getParams(req.body))
+            return action.func(...action.getParams(req.body))
         }).then(result => {
+            console.log(result)
             let id = undefined
             if(result.rowCount == 1){
                 id = result.rows[0].id;
             }
             res.status(200).json({result: id || result, table: req.params[paramName]})
         }, err => {
-            res.status(500).json({filterErrors: err.errors})
-            return ValidateError('Already handled', err.errors);
+            console.log(err)
+            res.status(500).json({filterErrors: err.error})
+            throw ValidateError('Already handled', err.error);
         })
         .catch(err => {
             if(err instanceof ValidateError)
