@@ -1,14 +1,9 @@
 var db = require('./db');
 
 async function createCart(userId){
-    var err = null, res = null;
-    try{
-        res = await db.asyncQuery('INSERT INTO cart (user_id, created_date) VALUES ($1, $2)',
+      
+    return await db.asyncQuery('INSERT INTO cart (user_id, created_date) VALUES ($1, $2)',
         [userId, new Date().toISOString()]);
-    } catch(e){
-        err = e;
-    }
-    return [err, res];
 }
 
 async function getCartItemById(id){

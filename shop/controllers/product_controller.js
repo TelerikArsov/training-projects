@@ -24,15 +24,8 @@ async function fetchPropBy(query, leadingValue){
 
 
 function addAmmount(ammount, product_id, callback, result) {
-    if(ammount && product_id){
-        db.query('INSERT INTO product_quantity (product_id, quantity) VALUES ($1, $2)',
-        [product_id, ammount],(error, res) => {
-            if (error) {
-                callback(error, res);
-            }
-            callback(error, result)
-        });
-    }
+    return db.asyncQuery('INSERT INTO product_quantity (product_id, quantity) VALUES ($1, $2)',
+        [product_id, ammount]);
 }
 
 
@@ -61,42 +54,35 @@ exports.fetchableTypes = [
     this.types.range, this.types.dropdown, this.types.multiDropdown
 ]
 
-exports.editAmmount = (req, _res, callback) => {
-    if(req.session.user && req.session.role == "admin"){
-        db.query('UPDATE product_quantity SET quantity = $2 WHERE product_id = $1 ',
-        Object.values(req.body), callback);
-    }
+exports.editAmmount = (id, ammount) => {
+    return db.asyncQuery('UPDATE product_quantity SET quantity = $2 WHERE product_id = $1 ', [id, ammount]);
 }
 
-exports.createProduct = (req, _res, callback) => {
-    if(req.session.user && req.session.role == "admin"){
-        const { name, manifacturer, description, cost, category, visible, ammount } = req.body;
-        db.query('INSERT INTO products (name, manifacturer, description, cost, category_id, visible) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
-        [name, manifacturer, description, cost, category, visible], (error, results) => {
-            if (error) {
-                callback(error, results);
-            }
-            addAmmount(ammount, results.rows[0].id, callback, results)
-        })
-    }
+exports.createProduct = async (name, manifacturer, description, cost, category, visible, ammount) => {
+    const result = await db.asyncQuery(`INSERT INTO products (name, manifacturer, description, cost,
+        category_id, visible) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+        [name, manifacturer, description, cost, category, visible]);
+    return addAmmount(ammount, result.rows[0].id);
+        
 }
 
-exports.deleteProduct = (req, res, callback) => {
-    if(req.session.user && req.session.role == "admin"){
-        const { id } = req.body
-        db.query('DELETE FROM products WHERE id = $1',
-        [id], callback);
-    }
+exports.deleteProduct = (id) => {
+    db.asyncQuery('DELETE FROM products WHERE id = $1', [id]);
 }
-exports.getAllProducts = (req, res, callback) => {
+exports.getAllProducts = (role) => {
     var query = `SELECT p.id, p.name, manifacturer, description, cost, c.name AS
     category, p.visible, pq.quantity AS ammount FROM products AS p LEFT JOIN categories AS c ON c.id = p.category_id
     LEFT JOIN product_quantity AS pq ON pq.product_id = p.id`;
-    if(req.session.role != "admin") {getRangeProp
+    if(role != "admin") {
         query += ' WHERE p.visible = TRUE';
     }
     query += ';';
-    db.query(query, callback);
+    return db.asyncQuery(query);
+}
+exports.editProduct = (id, name, manifacturer, description, cost, category, visible) => {
+    return db.asyncQuery(`UPDATE products SET name = $2, manifacturer = $3, 
+        description = $4, cost = $5, category_id = $6, visible = $7 WHERE id = $1`,
+        [id, name, manifacturer, description, cost, category, visible]);
 }
 
 exports.getProductsByFilter = async (filters, role, getPropInfo) => {
@@ -175,49 +161,32 @@ exports.getProductsByFilter = async (filters, role, getPropInfo) => {
     return result
 }
 
-exports.assignTag = (req, _res, callback) => {
-    if(req.session.user && req.session.role == "admin"){
-        const { id, tag_id } = req.body;
-        if(id !== '' && tag_id !== ''){
-            db.query(`INSERT INTO product_tags 
-            (product_id, tag_id) VALUES ($1, $2)`, [id, tag_id], callback);
-        }
-    }
+exports.assignTag = (id, tag_id) => {
+    return db.asyncQuery(`INSERT INTO product_tags (product_id, tag_id) VALUES ($1, $2)`,
+     [id, tag_id]);
 }
 
-exports.removeTag = (req, _res, callback) => {
-    if(req.session.user && req.session.role == "admin"){
-        const { id, tag_id } = req.body
-        db.query('DELETE FROM product_tags WHERE product_id = $1 and tag_id = $2',
-        [id, tag_id], callback);
-    }
+exports.removeTag = (id, tag_id) => {
+    return db.asyncQuery('DELETE FROM product_tags WHERE product_id = $1 and tag_id = $2',
+        [id, tag_id]);
 }
 
-exports.getAssignedTags = (req, _res, callback) => {
-    if(req.session.user && req.session.role == "admin"){
-        const { id } = req.query;
-        db.query(`SELECT * FROM tags WHERE id IN (
+exports.getAssignedTags = (role, id) => {
+    if(role == "admin"){
+        return db.asyncQuery(`SELECT * FROM tags WHERE id IN (
             SELECT tag_id FROM product_tags
-            WHERE product_id = $1)`, [id], callback);
-    }
+            WHERE product_id = $1)`, [id]);
+    }else 
+        return undefined;
 }
 
-exports.getNotAssignedTags = (req, res, callback) => {
-    if(req.session.user && req.session.role == "admin"){
-        const { id } = req.query;
-        db.query(`SELECT * FROM tags WHERE id NOT IN (
+exports.getNotAssignedTags = (role, id) => {
+    if(role == "admin"){
+        return db.asyncQuery(`SELECT * FROM tags WHERE id NOT IN (
             SELECT tag_id FROM product_tags
-            WHERE product_id = $1)`, [id], callback);
-    }
-}
-
-exports.editProduct = (req, res, callback) => {
-    if(req.session.user && req.session.role == "admin"){
-        const { id, name, manifacturer, description, cost, category, visible } = req.body
-        db.query(`UPDATE products SET name = $2, manifacturer = $3, description = $4,
-        cost = $5, category_id = $6, visible = $7 WHERE id = $1`,
-        [id, name, manifacturer, description, cost, category, visible], callback);
-    }
+            WHERE product_id = $1)`, [id]);
+    }else
+        return undefined
 }
 
 async function ratingExists(userId, product_id){

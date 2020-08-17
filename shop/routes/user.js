@@ -9,19 +9,17 @@ const user = require('../utils/routes').routes.user
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 
-router.get(user.get.root, function(req, res) {
+router.get(user.get.root, function(req, res, next) {
     if(req.session.user){
-        userController.getUser(req, (err, results) => {
-            if(err){
-                res.status(500).json({errors: userController.handleError(err)})
-            }else{
-                if (results.rowCount == 1) {
-                    res.render('account', results.rows[0]);
+        userController.getUser(req.session.user)
+            .then(result => {
+                if(result.rowCount == 1) {
+                    res.render('account', result.rows[0]);
                 }else {
                     res.render('account');
                 }
-            }
-        });
+            })
+            .catch(err => next(err));
     }
 });
 
@@ -45,15 +43,20 @@ router.post(user.post.updateProfile, [
         }
         return true;
     })
-], function(req, res) {
-    validate.handleValidation(req, res, userController.updateUser, (err, result) => {
-        if(err){
-            res.status(500).json({errors: userController.handleError(err)});
-        }else{
-            req.session.user = result.username;
-            res.status(200).json({result: result});
-        }
-    });
+], function(req, res, next) {
+    let errors = validate.handleValidation(req, res)
+    if(errors){
+        res.status(500).json({filterErrors: errors})
+    }else{
+        userController.updateUser(req.session.userId, req.body.username, req.body.email,
+            req.body.pass, req.body.newpass)
+            .then(result => {
+                req.session.user = result.username;
+                res.status(200).json({result: result});
+            })
+            .catch(err => next(err));
+    }
+  
 });
 
 router.post(user.post.register, [
@@ -67,56 +70,55 @@ router.post(user.post.register, [
         return true;
     })
 ], function(req, res) {
+    let errors = validate.handleValidation(req, res)
+    if(errors){
+        res.status(500).json({filterErrors: errors})
+    }else{
+        userController.createUser(req.body.username, req.body.email, req.body.pass)
+            .then(result => {
+                let tokenData = undefined;
+                if(result.rowCount == 1){
+                    tokenData = {
+                        user_id: result.rows[0].id,
+                        token: crypto.randomBytes(16).toString('hex')
+                    }
+                }
+                return verifTokenController.createToken(tokenData);
+            }).then(_ => {
+                let transporter = nodemailer.createTransport({
+                    service: 'gmail',
+                    auth: {
+                        type: 'OAUTH2',
+                        user: process.env.EMAILUSER,
+                        clientId: process.env.EMAILCLIENTID,
+                        clientSecret: process.env.EMAILCLIENTSECRET,
+                        refreshToken: process.env.EMAILREFRESHTOKEN,
+                        accessToken: process.env.EMAILACCESSTOKEN
+                    }
+                });
+                let message = {
+                    from: 'no-reply@yourwebapplication.com',
+                    to: req.body.email, 
+                    subject: 'Account Verification Token', 
+                    text: 'Hello,\n\n' + 'Please verify your account by clicking the link: \nhttp:\/\/' + req.headers.host + '\/user\/confirmation\/' + tokenData.token + '.\n' 
+                };
+                return transporter.sendMail(message)
+            }).then(_ =>  res.status(200).send())
+            .catch();
+    }
     validate.handleValidation(req, res, userController.createUser, (err, result) => {
         if(err){
             res.status(500).json({errors: userController.handleError(err)});
         }else{
-            if(result.rowCount == 1){
-                console.log(result.rows[0])
-                var tokenData = {user_id: result.rows[0].id, token: crypto.randomBytes(16).toString('hex')}
-                verifTokenController.createToken(tokenData, (err, _res) => {
-                    if(err){
-                        res.status(500).json({errors: "Failed to create token"});
-                    }else {
-                        let transporter = nodemailer.createTransport({
-                            service: 'gmail',
-                            auth: {
-                                type: 'OAUTH2',
-                                user: process.env.EMAILUSER,
-                                clientId: process.env.EMAILCLIENTID,
-                                clientSecret: process.env.EMAILCLIENTSECRET,
-                                refreshToken: process.env.EMAILREFRESHTOKEN,
-                                accessToken: process.env.EMAILACCESSTOKEN
-                            }
-                        });
-                        var message = {
-                            from: 'no-reply@yourwebapplication.com',
-                            to: req.body.email, 
-                            subject: 'Account Verification Token', 
-                            text: 'Hello,\n\n' + 'Please verify your account by clicking the link: \nhttp:\/\/' + req.headers.host + '\/user\/confirmation\/' + tokenData.token + '.\n' 
-                        };
-                        transporter.sendMail(message, function (err) {
-                            if (err) {
-                                //return res.status(500).json({ errors: err.message });
-                                console.log(err.message)
-                            }
-                        });
-                        res.status(200).send();
-                    }
-                })
-            }else{
-                res.status(500).json({errors: "Unknown token error"});
-            }
+            
             
         }
     });
 });
 
-router.get(user.get.confirmationToken, function(req, res) {
-    verifTokenController.getToken(req, res, (err, result) => {
-        if(err) {
-            res.status(500).json({errors: "Cant verify token"});
-        }else{
+router.get(user.get.confirmationToken, function(req, res, next) {
+    verifTokenController.getToken(req.params.token)
+        .then(result => {
             if(result.rowCount == 1) {
                 userController.verifyUser(result.rows[0].user_id, (err, _result) => {
                     if(err){
@@ -128,35 +130,37 @@ router.get(user.get.confirmationToken, function(req, res) {
             }else{
                 res.status(500).json({errors: "Cant verify token"});
             }
-        }
-    })
+        })
+        .catch(err => next(err));
 });
 
 router.post(user.post.login, [
     check('username').notEmpty().withMessage('Username is required'),
     check('pass').notEmpty().withMessage('Password is required')
-],  function(req, res) {
-    validate.handleValidation(req, res, userController.loginUser, (err, result) => {
-        if(err){
-            res.status(500).json({errors: userController.handleError(err)});
-            console.log('err');
-        }else{
-            if (result.rowCount == 1) {
-                if(result.rows[0]['isverified']){
-                    req.session.user = result.rows[0]['username'];
-                    req.session.role = "user";
-                    req.session.userId = result.rows[0]['id'];
-                    console.log(`Req session: ${req.session.user}`);
-                    res.status(200).send({result: 'redirect', url:'/'});
+],  function(req, res, next) {
+    let errors = validate.handleValidation(req, res)
+    if(errors){
+        res.status(500).json({filterErrors: errors})
+    }else{
+        userController.loginUser(req.body.username, req.body.pass)
+            .then(result => {
+                if (result.rowCount == 1) {
+                    if(result.rows[0]['isverified']){
+                        req.session.user = result.rows[0]['username'];
+                        req.session.role = "user";
+                        req.session.userId = result.rows[0]['id'];
+                        console.log(`Req session: ${req.session.user}`);
+                        res.status(200).send({result: 'redirect', url:'/'});
+                    }
+                    else{
+                        res.status(500).json({errors: "Not verified"});
+                    }
+                }else{
+                    res.status(500).json({errors: "Failed to authenticate"});
                 }
-                else{
-                    res.status(500).json({errors: "Not verified"});
-                }
-            }else{
-                res.status(500).json({errors: "Failed to authenticate"});
-            }
-        }
-    });
+            })
+            .catch(err => next(err))   
+    }
 });
 
 

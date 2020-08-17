@@ -13,42 +13,28 @@ exports.handleError = (err) => {
     return errorMsg
 }
 
-exports.createUser = (req, res, callback) => {
-    const { username, email, pass } = req.body;
-    db.query('INSERT INTO users (username, email, password, created_on) VALUES ($1, $2, $3, $4) RETURNING id',
-     [username, email, pass, new Date().toISOString()], callback);
+exports.createUser = (username, email, pass) => {
+    return db.asyncQuery('INSERT INTO users (username, email, password, created_on) VALUES ($1, $2, $3, $4) RETURNING id',
+        [username, email, pass, new Date().toISOString()]);
 }
 // to refactor reasue code?
-exports.loginUser = (req, _res, callback) => {
-    const { username, pass } = req.body;
-    db.query('SELECT id, username, isverified FROM users WHERE username = $1 AND password = $2',
-    [username, pass], callback);
+exports.loginUser = (username, pass) => {
+    return db.asyncQuery(`SELECT id, username, isverified FROM users 
+        WHERE username = $1 AND password = $2`, [username, pass]);
 }
 
-exports.verifyUser = (id, callback) => {
-    if(id){
-        db.query('UPDATE users SET isverified = TRUE WHERE id = $1',
-        [id], callback);
-    }
+exports.verifyUser = (id) => {
+    db.asyncQuery('UPDATE users SET isverified = TRUE WHERE id = $1', [id]);
 }
 
-exports.getUser = (req, callback) => {
-    const username = req.session.user
-    if (username) {
-        db.query('SELECT id, username, email FROM users WHERE username = $1 ',
-        [username], callback);
-    }
+exports.getUser = (username) => {
+    db.asyncQuery('SELECT id, username, email FROM users WHERE username = $1 ',
+        [username]);
 }
 
-exports.updateUser = (req, _res, callback) => {
-    const { username, email, pass, newpass } = req.body
-    const id = req.session.userId
+exports.updateUser = (userId, username, email, pass, newpass) => {
     const newPassword = newpass == null ? pass : newpass;
-    if(id){
-        db.query('UPDATE users SET username = $1, email = $2, password = $3 WHERE id = $4 AND password = $5',
-        [username, email, newPassword, id, pass], (error, _results) => {
-            callback(error, req.body)
-        });
-    }
-    
+    return db.asyncQuery(`UPDATE users SET username = $1, email = $2, password = $3
+        WHERE id = $4 AND password = $5 RETURNING username, email`,
+        [username, email, newPassword, userId, pass]);
 }

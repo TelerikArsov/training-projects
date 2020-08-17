@@ -133,7 +133,7 @@ router.post(root.post.createOrder, [
             }else{
                 let userId = req.session.userId
                 let {paid, name, address} = req.body;
-                orderController.createOrder(userId)
+                orderController.createOrder(userId, paid, name, address)
                     .then(result =>  res.status(200).json({result: result}))
                     .catch(err => next(err)) 
             }
