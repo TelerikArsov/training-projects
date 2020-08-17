@@ -11,11 +11,11 @@ exports.loginUser = (username, pass) => {
 }
 
 exports.verifyUser = (id) => {
-    db.asyncQuery('UPDATE users SET isverified = TRUE WHERE id = $1', [id]);
+    return db.asyncQuery('UPDATE users SET isverified = TRUE WHERE id = $1', [id]);
 }
 
 exports.getUser = (username) => {
-    db.asyncQuery('SELECT id, username, email FROM users WHERE username = $1 ',
+    return db.asyncQuery('SELECT id, username, email FROM users WHERE username = $1 ',
         [username]);
 }
 
