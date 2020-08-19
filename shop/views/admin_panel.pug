@@ -1,14 +1,6 @@
-if(admin)
-    h3= username
-    a(href=publicRoutes.admin.editAccount)
-        h2= 'Account'
-    a(href=publicRoutes.admin.orderPage)
-      h2= 'Orders'
-    a(href=publicRoutes.admin.createWorkerPage)
-        h2='Create worker'
-    a(href=publicRoutes.admin.createPage)
-        h2='Create New Tags, Categories and products'
-    form(action=publicRoutes.admin.logout, method='POST')
-        input(type='submit', value='Logout')
-else
-    h3= "Stranger"
+extends admin_layout.pug
+block content
+    if(admin)
+        h3= username
+    else
+        h3= "Stranger"

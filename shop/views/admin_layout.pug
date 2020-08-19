@@ -1,0 +1,17 @@
+extends base_layout.pug
+
+block append css
+    link(rel='stylesheet', type='text/css', href='/stylesheets/admin_layout.css')
+block navbar
+    if(admin)
+        ul
+            li
+                a(href=publicRoutes.admin.editAccount)= 'Account'
+            li
+                a(href=publicRoutes.admin.orderPage)= 'Orders'
+            li
+                a(href=publicRoutes.admin.createWorkerPage)= 'Create worker'
+            li
+                a(href=publicRoutes.admin.createPage)= 'Create Tags, categ. and prod.'
+        form(action=publicRoutes.admin.logout, method='POST')
+            input(type='submit', value='Logout')

@@ -1,314 +1,313 @@
-body
-    include mixins/snackbarMixin
-    block content
-        link(rel='stylesheet', type='text/css', href='/stylesheets/create.css')
-        include mixins/formsMixin
-        p Tags
-        br
-        h= generateParamUrl(publicRoutes.admin.create, {table: "tag"})
-        +tcForm(generateParamUrl(publicRoutes.admin.create, {table: "tag"}))
-        button#tags.refresh Refresh
-        #tagsEdit.modal
-            .modal-content
-                span.close ×
-                +tcForm(generateParamUrl(publicRoutes.admin.edit, {table: "tag"}))
-        table#tagsResults.display(table='tags')
-            thead
-                tr
-                th Id
-                th Name
-                th Color
-                th Visible
-                th
-                th 
-            tbody
-        p Categories
-        br
-        +tcForm(generateParamUrl(publicRoutes.admin.create, {table: "categories"}))
-        button#categories.refresh Refresh
-        #categoriesEdit.modal
-            .modal-content
-                span.close ×
-                +tcForm(generateParamUrl(publicRoutes.admin.edit, {table: "categories"}))
-        table#categoriesResults.display(table='categories')
-            thead
-                tr
-                th Id
-                th Name
-                th Color
-                th Visible
-                th
-                th
-            tbody
-        p Products
-        br
-        +productForm(generateParamUrl(publicRoutes.admin.create, {table: "products"}))
-        button#products.refresh Refresh
-        #productsEdit.modal
-            .modal-content
-                span.close ×
-                +productForm(generateParamUrl(publicRoutes.admin.edit, {table: "products"}))
-        table#productsResults.display(table='products')
-            thead
-                tr
-                th Id
-                th Name
-                th Manufacturer
-                th Description
-                th Cost
-                th Category
-                th Visible
-                th Ammount
-                th Tags
-                th
-                th 
-            tbody
-        #ammount.modal
-            .modal-content
-                span.close ×
-                +productAmmountForm(publicRoutes.admin.productAmmount)
-        #productTags.modal
-            .modal-content
-                span.close ×
-                +tagsList()
-        +snackbar()
-    block scripts
-        link(rel='stylesheet', type='text/css', href='https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css')
-        script(type='text/javascript', charset='utf8', src='https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js')
-        link(href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet")
-        script(type='text/javascript', charset='utf8', src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js")
-        script.
-            var adminPublicRoutes = !{JSON.stringify(publicRoutes.admin)};
-            var generateParamUrl = !{generateParamUrl}
-            $(document).ready( function () {
-                $('.js-example-basic-single').select2({
-                    theme: "classic"
-                });
-                var columns = [
-                        { data: 'id' },
-                        { data: 'name' },
-                        { data: 'color' },
-                        { data: 'visible' },
-                        { targets: -1, data: null, defaultContent: "<button class='editRecord'>Edit</button>"},
-                        { targets: -1, data: null, defaultContent: "<button class='deleteRecord'>X</button>"}
-                    ];
-                var productColumns = [
-                        { data: 'id' },
-                        { data: 'name' },
-                        { data: 'manifacturer' },
-                        { data: 'description' },
-                        { data: 'cost' },
-                        { data: 'category' },
-                        { data: 'visible' },
-                        { className: "ammount", data: 'ammount'},
-                        { targets: -1, data: null, defaultContent: "<button class='editTags'>Tags</button>"},
-                        { targets: -1, data: null, defaultContent: "<button class='editRecord'>Edit</button>"},
-                        { targets: -1, data: null, defaultContent: "<button class='deleteRecord'>X</button>"}
-                    ];
-                var tables = { 
-                    tags: $('#tagsResults').DataTable({
-                            paging: true,
-                            scrollY: 400,
-                            columns: columns
-                    }),  
-                    categories: $('#categoriesResults').DataTable({
-                            paging: true,
-                            scrollY: 400,
-                            columns: columns
-                    }),
-                    products: $('#productsResults').DataTable({
+extends admin_layout.pug
+block content
+    link(rel='stylesheet', type='text/css', href='/stylesheets/create.css')
+    include mixins/formsMixin
+    p Tags
+    br
+    h= generateParamUrl(publicRoutes.admin.create, {table: "tag"})
+    +tcForm(generateParamUrl(publicRoutes.admin.create, {table: "tag"}))
+    button#tags.refresh Refresh
+    #tagsEdit.modal
+        .modal-content
+            span.close ×
+            +tcForm(generateParamUrl(publicRoutes.admin.edit, {table: "tag"}))
+    table#tagsResults.display(table='tags')
+        thead
+            tr
+            th Id
+            th Name
+            th Color
+            th Visible
+            th
+            th 
+        tbody
+    p Categories
+    br
+    +tcForm(generateParamUrl(publicRoutes.admin.create, {table: "categories"}))
+    button#categories.refresh Refresh
+    #categoriesEdit.modal
+        .modal-content
+            span.close ×
+            +tcForm(generateParamUrl(publicRoutes.admin.edit, {table: "categories"}))
+    table#categoriesResults.display(table='categories')
+        thead
+            tr
+            th Id
+            th Name
+            th Color
+            th Visible
+            th
+            th
+        tbody
+    p Products
+    br
+    +productForm(generateParamUrl(publicRoutes.admin.create, {table: "products"}))
+    button#products.refresh Refresh
+    #productsEdit.modal
+        .modal-content
+            span.close ×
+            +productForm(generateParamUrl(publicRoutes.admin.edit, {table: "products"}))
+    table#productsResults.display(table='products')
+        thead
+            tr
+            th Id
+            th Name
+            th Manufacturer
+            th Description
+            th Cost
+            th Category
+            th Visible
+            th Ammount
+            th Tags
+            th
+            th 
+        tbody
+    #ammount.modal
+        .modal-content
+            span.close ×
+            +productAmmountForm(publicRoutes.admin.productAmmount)
+    #productTags.modal
+        .modal-content
+            span.close ×
+            +tagsList()
+    +snackbar()
+block scripts
+    link(rel='stylesheet', type='text/css', href='https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css')
+    script(type='text/javascript', charset='utf8', src='https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js')
+    link(href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet")
+    script(type='text/javascript', charset='utf8', src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js")
+    script.
+        var adminPublicRoutes = !{JSON.stringify(publicRoutes.admin)};
+        var generateParamUrl = !{generateParamUrl}
+        $(document).ready( function () {
+            $('.js-example-basic-single').select2({
+                theme: "classic"
+            });
+            var columns = [
+                    { data: 'id' },
+                    { data: 'name' },
+                    { data: 'color' },
+                    { data: 'visible' },
+                    { targets: -1, data: null, defaultContent: "<button class='editRecord'>Edit</button>"},
+                    { targets: -1, data: null, defaultContent: "<button class='deleteRecord'>X</button>"}
+                ];
+            var productColumns = [
+                    { data: 'id' },
+                    { data: 'name' },
+                    { data: 'manifacturer' },
+                    { data: 'description' },
+                    { data: 'cost' },
+                    { data: 'category' },
+                    { data: 'visible' },
+                    { className: "ammount", data: 'ammount'},
+                    { targets: -1, data: null, defaultContent: "<button class='editTags'>Tags</button>"},
+                    { targets: -1, data: null, defaultContent: "<button class='editRecord'>Edit</button>"},
+                    { targets: -1, data: null, defaultContent: "<button class='deleteRecord'>X</button>"}
+                ];
+            var tables = { 
+                tags: $('#tagsResults').DataTable({
                         paging: true,
                         scrollY: 400,
-                        columns: productColumns
-                    })}
-                var editId = null;
-                $('.display tbody').on( 'click', 'button.editRecord', function () {
-                    //prefil data todo
-                    var modal = $(`#${$(this).parents('table').attr('table')}Edit`);
-                    openModal(modal, this);
-                } );
-                $('.display tbody').on( 'click', '.ammount', function () {
-                    //prefil data todo
-                    var modal = $(`#ammount`);
-                    openModal(modal, this);
-                } );
-                $('.display tbody').on( 'click', 'button.editTags', function () {
-                    //prefil data todo
-                    var modal = $(`#productTags`);
-                    openModal(modal, this);
-                    refreshNotAssignedTags(modal.find('select'));
-                    refresh('productTags', function (data) {
-                        refreshAssignedTags(modal.find('.tags'), data);
+                        columns: columns
+                }),  
+                categories: $('#categoriesResults').DataTable({
+                        paging: true,
+                        scrollY: 400,
+                        columns: columns
+                }),
+                products: $('#productsResults').DataTable({
+                    paging: true,
+                    scrollY: 400,
+                    columns: productColumns
+                })}
+            var editId = null;
+            $('.display tbody').on( 'click', 'button.editRecord', function () {
+                //prefil data todo
+                var modal = $(`#${$(this).parents('table').attr('table')}Edit`);
+                openModal(modal, this);
+            } );
+            $('.display tbody').on( 'click', '.ammount', function () {
+                //prefil data todo
+                var modal = $(`#ammount`);
+                openModal(modal, this);
+            } );
+            $('.display tbody').on( 'click', 'button.editTags', function () {
+                //prefil data todo
+                var modal = $(`#productTags`);
+                openModal(modal, this);
+                refreshNotAssignedTags(modal.find('select'));
+                refresh('productTags', function (data) {
+                    refreshAssignedTags(modal.find('.tags'), data);
+                });
+            } );
+            function openModal(modal, table){
+                modal.on('click', '.close', function(){ modal.css("display","none"); editId = null});
+                modal.css("display","block");
+                editId = tables[$(table).parents('table').attr('table')]
+                .row( $(table).parents('tr') ).data()['id'];
+            }
+            $('.display tbody').on( 'click', 'button.deleteRecord', function () {
+                var data = tables[$(this).parents('table').attr('table')]
+                .row( $(this).parents('tr') ).data();
+                if(confirm(`Delete record with Id: ${data['id']} and Name: ${data['name']}`)){
+                    $.ajax({
+                        data: {id: data['id']},
+                        type: 'POST',
+                        url: generateParamUrl(adminPublicRoutes.delete, {table: $(this).parents('table').attr('table')}),
+                        dataType: 'json',
+                        success: function(data){
+                            refresh(data['table'])
+                        },
+                        error: function(data){
+                            errorHandle(data.responseJSON, null)
+                        }
                     });
-                } );
-                function openModal(modal, table){
-                    modal.on('click', '.close', function(){ modal.css("display","none"); editId = null});
-                    modal.css("display","block");
-                    editId = tables[$(table).parents('table').attr('table')]
-                    .row( $(table).parents('tr') ).data()['id'];
                 }
-                $('.display tbody').on( 'click', 'button.deleteRecord', function () {
-                    var data = tables[$(this).parents('table').attr('table')]
-                    .row( $(this).parents('tr') ).data();
-                    if(confirm(`Delete record with Id: ${data['id']} and Name: ${data['name']}`)){
-                        $.ajax({
-                            data: {id: data['id']},
-                            type: 'POST',
-                            url: generateParamUrl(adminPublicRoutes.delete, {table: $(this).parents('table').attr('table')}),
-                            dataType: 'json',
-                            success: function(data){
-                                refresh(data['table'])
-                            },
-                            error: function(data){
-                                errorHandle(data.responseJSON, null)
+            } );
+            $('.refresh').on('click', function(e){
+                refresh($(this).attr('id'));
+            });
+
+            function refresh(tableName, callback) {
+                    $.ajax({
+                    type: 'GET',
+                    data: {id: editId},
+                    url: generateParamUrl(adminPublicRoutes.getAll, {table: tableName}),
+                    dataType: 'json',
+                    success: function(data){
+                        if(callback) {
+                            callback(data);
+                        }else {
+                            table = tables[data['table']]
+                            if(table){
+                                table.clear().draw();
+                                table.rows.add(data['result']).draw();
                             }
-                        });
+                        }
+                    },
+                    error: function(data){
+                        errorHandle(data.responseJSON, null)
                     }
-                } );
-                $('.refresh').on('click', function(e){
-                   refresh($(this).attr('id'));
                 });
+            }
 
-                function refresh(tableName, callback) {
-                     $.ajax({
-                        type: 'GET',
-                        data: {id: editId},
-                        url: generateParamUrl(adminPublicRoutes.getAll, {table: tableName}),
-                        dataType: 'json',
-                        success: function(data){
-                            if(callback) {
-                                callback(data);
-                            }else {
-                                table = tables[data['table']]
-                                if(table){
-                                    table.clear().draw();
-                                    table.rows.add(data['result']).draw();
-                                }
-                            }
-                        },
-                        error: function(data){
-                            errorHandle(data.responseJSON, null)
-                        }
-                    });
-                }
-
-                $(".productCategoryRefresh").on('click', function(e) {
-                    var select = $(this).siblings('.productCategory')
-                    select.empty();
-                    refresh('categories', function (data) {
-                        $.each(data['result'], function(_, value){
-                            select.append($('<option>', { 
-                                value: value.id.toString(10),
-                                text : value.name 
-                            }));
-                        })
-                    });
-                });
-
-                $(".productTagsRefresh").on('click', function(e) {
-                    var tagsContainer = $(this).siblings('.tags')
-                    refresh('productTags', function (data) {
-                        refreshAssignedTags(tagsContainer, data);
-                    });
-                });
-                function productTagAction(data, tagsContainer, select){
-                    refresh('productTags', function (data) {
-                        refreshAssignedTags(tagsContainer, data);
-                    });
-                    refreshNotAssignedTags(select);
-                    refresh(data['table']);
-                }
-                $("#addTag").on('click', function(e) {
-                    var tagValue = $(this).siblings('select').val();
-                    var tagsContainer = $(this).siblings('.tags');
-                    var select = $(this).siblings('select');
-                    console.log(tagValue)
-                    $.ajax({
-                        type: 'POST',
-                        data: {id: editId, tag_id: tagValue},
-                        url: adminPublicRoutes.addTag,
-                        dataType: 'json',
-                        success: function(data){
-                            productTagAction(data, tagsContainer, select);
-                        },
-                        error: function(data){
-                            errorHandle(data.responseJSON, null)
-                        }
-                    })
-                });
-                $('.tags').on('click', '.deleteProductTag', function(e){
-                    var tagValue = $(this).parent().attr('value');
-                    var tagsContainer = $(this).parents('.tags');
-                    console.log(tagsContainer)
-                    var select = tagsContainer.siblings('select');
-                    $.ajax({
-                        type: 'POST',
-                        data: {id: editId, tag_id: tagValue},
-                        url: adminPublicRoutes.removeTag,
-                        dataType: 'json',
-                        success: function(data){
-                            productTagAction(data, tagsContainer, select)
-                        },
-                        error: function(data){
-                            errorHandle(data.responseJSON, null)
-                        }
-                    })
-                });
-                function refreshAssignedTags(tagsContainer, data){
-                    tagsContainer.empty();
+            $(".productCategoryRefresh").on('click', function(e) {
+                var select = $(this).siblings('.productCategory')
+                select.empty();
+                refresh('categories', function (data) {
                     $.each(data['result'], function(_, value){
-                        tagsContainer.append($('<li>', { 
+                        select.append($('<option>', { 
                             value: value.id.toString(10),
-                            text : value.name
-                        }).append('<span class="deleteProductTag">x</span>'));
+                            text : value.name 
+                        }));
                     })
-                }
-                function refreshNotAssignedTags(selectObj){
-                    selectObj.empty();
-                    refresh('productNotAssignedTags', function (data) {
-                        $.each(data['result'], function(_, value){
-                            selectObj.append($('<option>', { 
-                                value: value.id.toString(10),
-                                text : value.name,
-                                color: value.color
-                            }));
-                        })
-                    });
-                }
-
-                function uploadFile(formData){
-                    $.ajax({
-                        url: adminPublicRoutes.uploadImage,
-                        type: 'POST',
-                        data: formData,
-                        async: false,
-                        cache: false,
-                        contentType: false,
-                        enctype: 'multipart/form-data',
-                        processData: false,
-                        success: function (_data) {
-                           showSnackbar("File uploaded", true);
-                        }
-                    });
-                }
-                $('form').on('submit', function(event) {
-                    var data = {}
-                    var form = this;
-                    if($(this).parent().attr('class') == "modal-content") {
-                        data['id'] = editId;
-                    }
-                    
-                    genericSubmitForm(data, event, form, function(data){
-                            var ul = $(form).children('.errors')[0]
-                            if(ul){
-                                ul.innerHTML = "";
-                            }
-                            if($(form).attr('class') == 'Products'){
-                                var formData = new FormData ($(form).parent().children('.productImage')[0]);
-                                formData.set('id', data['id']);
-                                uploadFile(formData);
-                            }
-                            refresh(data['table']);
-                        })
                 });
             });
+
+            $(".productTagsRefresh").on('click', function(e) {
+                var tagsContainer = $(this).siblings('.tags')
+                refresh('productTags', function (data) {
+                    refreshAssignedTags(tagsContainer, data);
+                });
+            });
+            function productTagAction(data, tagsContainer, select){
+                refresh('productTags', function (data) {
+                    refreshAssignedTags(tagsContainer, data);
+                });
+                refreshNotAssignedTags(select);
+                refresh(data['table']);
+            }
+            $("#addTag").on('click', function(e) {
+                var tagValue = $(this).siblings('select').val();
+                var tagsContainer = $(this).siblings('.tags');
+                var select = $(this).siblings('select');
+                console.log(tagValue)
+                $.ajax({
+                    type: 'POST',
+                    data: {id: editId, tag_id: tagValue},
+                    url: adminPublicRoutes.addTag,
+                    dataType: 'json',
+                    success: function(data){
+                        productTagAction(data, tagsContainer, select);
+                    },
+                    error: function(data){
+                        errorHandle(data.responseJSON, null)
+                    }
+                })
+            });
+            $('.tags').on('click', '.deleteProductTag', function(e){
+                var tagValue = $(this).parent().attr('value');
+                var tagsContainer = $(this).parents('.tags');
+                console.log(tagsContainer)
+                var select = tagsContainer.siblings('select');
+                $.ajax({
+                    type: 'POST',
+                    data: {id: editId, tag_id: tagValue},
+                    url: adminPublicRoutes.removeTag,
+                    dataType: 'json',
+                    success: function(data){
+                        productTagAction(data, tagsContainer, select)
+                    },
+                    error: function(data){
+                        errorHandle(data.responseJSON, null)
+                    }
+                })
+            });
+            function refreshAssignedTags(tagsContainer, data){
+                tagsContainer.empty();
+                $.each(data['result'], function(_, value){
+                    tagsContainer.append($('<li>', { 
+                        value: value.id.toString(10),
+                        text : value.name
+                    }).append('<span class="deleteProductTag">x</span>'));
+                })
+            }
+            function refreshNotAssignedTags(selectObj){
+                selectObj.empty();
+                refresh('productNotAssignedTags', function (data) {
+                    $.each(data['result'], function(_, value){
+                        selectObj.append($('<option>', { 
+                            value: value.id.toString(10),
+                            text : value.name,
+                            color: value.color
+                        }));
+                    })
+                });
+            }
+
+            function uploadFile(formData){
+                $.ajax({
+                    url: adminPublicRoutes.uploadImage,
+                    type: 'POST',
+                    data: formData,
+                    async: false,
+                    cache: false,
+                    contentType: false,
+                    enctype: 'multipart/form-data',
+                    processData: false,
+                    success: function (_data) {
+                        showSnackbar("File uploaded", true);
+                    }
+                });
+            }
+            $('form').on('submit', function(event) {
+                var data = {}
+                var form = this;
+                if($(this).parent().attr('class') == "modal-content") {
+                    data['id'] = editId;
+                }
+                
+                genericSubmitForm(data, event, form, function(data){
+                        var ul = $(form).children('.errors')[0]
+                        if(ul){
+                            ul.innerHTML = "";
+                        }
+                        if($(form).attr('class') == 'Products'){
+                            var formData = new FormData ($(form).parent().children('.productImage')[0]);
+                            formData.set('id', data['id']);
+                            uploadFile(formData);
+                        }
+                        refresh(data['table']);
+                    })
+            });
+        });

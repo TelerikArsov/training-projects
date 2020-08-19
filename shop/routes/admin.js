@@ -19,8 +19,13 @@ var storage = multer.diskStorage({
 const upload = multer({ storage: storage })
 const { check, validationResult} = require('express-validator');
 
+router.use((req, res, next) => {
+    res.locals.admin = req.session.role == "admin" ? true : false
+    next()
+})
+
 router.get(admin.get.root, function(req, res){
-    res.render('admin_panel', {admin: req.session.role == "admin" ? true : false});
+    res.render('admin_panel');
 });
 
 router.get(admin.get.account, function(req, res){
