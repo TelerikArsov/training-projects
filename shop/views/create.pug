@@ -1,6 +1,5 @@
 body
     include mixins/snackbarMixin
-    script(src='/js/routes.js')
     block content
         link(rel='stylesheet', type='text/css', href='/stylesheets/create.css')
         include mixins/formsMixin
@@ -80,6 +79,7 @@ body
         script(type='text/javascript', charset='utf8', src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js")
         script.
             var adminPublicRoutes = !{JSON.stringify(publicRoutes.admin)};
+            var generateParamUrl = !{generateParamUrl}
             $(document).ready( function () {
                 $('.js-example-basic-single').select2({
                     theme: "classic"
@@ -105,18 +105,22 @@ body
                         { targets: -1, data: null, defaultContent: "<button class='editRecord'>Edit</button>"},
                         { targets: -1, data: null, defaultContent: "<button class='deleteRecord'>X</button>"}
                     ];
-                var tables = { tags: $('#tagsResults').DataTable( {
-                    paging: true,
-                    scrollY: 400,
-                    columns: columns
-                }),  categories: $('#categoriesResults').DataTable({
-                    paging: true,
-                    scrollY: 400,
-                    columns: columns
-                }), products: $('#productsResults').DataTable({
-                    paging: true,
-                    scrollY: 400,
-                    columns: productColumns})}
+                var tables = { 
+                    tags: $('#tagsResults').DataTable({
+                            paging: true,
+                            scrollY: 400,
+                            columns: columns
+                    }),  
+                    categories: $('#categoriesResults').DataTable({
+                            paging: true,
+                            scrollY: 400,
+                            columns: columns
+                    }),
+                    products: $('#productsResults').DataTable({
+                        paging: true,
+                        scrollY: 400,
+                        columns: productColumns
+                    })}
                 var editId = null;
                 $('.display tbody').on( 'click', 'button.editRecord', function () {
                     //prefil data todo

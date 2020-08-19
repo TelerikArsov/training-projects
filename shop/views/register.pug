@@ -1,13 +1,7 @@
-body
-    include mixins/snackbarMixin
-    block content
-        include mixins/formsMixin
-        +registerUserForm(publicRoutes.user.register)
-        +snackbar()
-    block scripts
-        script.
-            //refactor later
-            $('form').on('submit', function(event) {
-                var data = {}
-                genericSubmitForm(data, event, this)
-            });
+extends layout.pug
+include mixins/formsMixin
+block content
+    +registerUserForm(publicRoutes.user.register)
+    +snackbar()
+block append scripts
+    +submitForm()

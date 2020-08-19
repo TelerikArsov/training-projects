@@ -1,7 +1,6 @@
 body
     block content
         link(rel='stylesheet', type='text/css', href='/stylesheets/create.css')
-        script(src='/js/routes.js')
         include mixins/snackbarMixin
         table#ordersResult.display()
             thead
@@ -27,8 +26,9 @@ body
         script(type='text/javascript', charset='utf8', src='https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js')
         script.
             var adminPublicRoutes = !{JSON.stringify(publicRoutes.admin)};
+            var generateParamUrl = !{generateParamUrl}
             $(document).ready( function () {
-                var orderTable = $('#ordersResult').DataTable( {
+                orderTable = $('#ordersResult').DataTable( {
                     paging: true,
                     scrollY: 400,
                     columns: [
@@ -39,17 +39,8 @@ body
                         { data: 'address' }
                     ]
                 });
-                var orderProductsTable = $('#orderProducts').DataTable({
-                    paging: true,
-                    scrollY: 400,
-                    columns: [
-                        { data: 'name'},
-                        { data: 'quantity'},
-                        { data: 'price'}
-                    ]
-                })
                 var orderModal = $('#orderModal')
-                $('.display tbody').on( 'click', function () {
+                $('.display tbody').on( 'click', $('.display tbody:parent'), function () {
                     var id = orderTable.row( $(this).children('tr') ).data().id;
                     console.log(id)
                     openOrderModal(id);

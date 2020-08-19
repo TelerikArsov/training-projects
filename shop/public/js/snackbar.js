@@ -43,16 +43,14 @@ function genericSubmitForm(data, event, form, success){
             data[this.name] = this.value || '';
         }
     });
-    console.log(data)
-    console.log($(form).attr('action'))
     $.ajax({
         data: data,
         type: 'POST',
         url: $(form).attr('action'),
         dataType: 'json',
-        success: success || function(data){
+        success:  function(data){
+            console.log(data)
             if (data.result == 'redirect') {
-                //redirecting to main page from here.
                 window.location.replace(data.url);
             }
         },

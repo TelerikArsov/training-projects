@@ -106,14 +106,6 @@ router.post(user.post.register, [
             }).then(_ =>  res.status(200).send())
             .catch();
     }
-    validate.handleValidation(req, res, userController.createUser, (err, result) => {
-        if(err){
-            res.status(500).json({errors: userController.handleError(err)});
-        }else{
-            
-            
-        }
-    });
 });
 
 router.get(user.get.confirmationToken, function(req, res, next) {

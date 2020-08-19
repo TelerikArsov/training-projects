@@ -1,16 +1,8 @@
-body
-    include mixins/snackbarMixin
-    block content
-        include mixins/formsMixin
-        +editUserAccountForm(publicRoutes.user.root)
-        +snackbar()
-    block scripts
-        script.
-            //refactor later
-            $('form').on('submit', function(event) {
-                var data = {}
-                genericSubmitForm(data, event, this, function(data){
-                    showSnackbar("Account edited", true);
-                })
-            });
+extends layout.pug
+include mixins/formsMixin
+block content
+    +editUserAccountForm(publicRoutes.user.root)
+    +snackbar()
+block append scripts
+    +submitForm("Account edited")
     
