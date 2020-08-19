@@ -1,91 +1,41 @@
-body
-    block content
-        link(rel='stylesheet', type='text/css', href='/stylesheets/create.css')
-        include mixins/snackbarMixin
-        table#ordersResult.display()
-            thead
-                tr
-                th Id
-                th Paid
-                th Reciever Name
-                th address
-            tbody
-        #orderModal.modal
-            .modal-content
-                span.close ×
-                table#orderProducts.display()
-                    thead
-                        tr
-                        th Product Name
-                        th Quantity
-                        th Price
-                    tbody
-    block scripts
-        link(rel='stylesheet', type='text/css', href='https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css')
-        script(type='text/javascript', charset='utf8', src='https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js')
-        script.
-            var rootPublicRoutes = !{JSON.stringify(publicRoutes.root)};
-            var generateParamUrl = !{generateParamUrl}
-            $(document).ready( function () {
-                var orderTable = $('#ordersResult').DataTable( {
-                    paging: true,
-                    scrollY: 400,
-                    columns: [
-                        { data: 'id' },
-                        { data: 'paid' },
-                        { data: 'reciever_name' },
-                        { data: 'address' }
-                    ]
-                });
-                var orderProductsTable = $('#orderProducts').DataTable({
-                    paging: true,
-                    scrollY: 400,
-                    columns: [
-                        { data: 'name'},
-                        { data: 'quantity'},
-                        { data: 'price'}
-                    ]
-                })
-                var orderModal = $('#orderModal')
-                $('.display tbody').on( 'click', function () {
-                    if($(this).parent() == $('#ordersResult')){
-                        var id = orderTable.row( $(this).children('tr') ).data().id;
-                        openOrderModal(id);    
-                    }
-                });
-                function openOrderModal(id){
-                    $.ajax({
-                        type: 'GET',
-                        url: generateParamUrl(rootPublicRoutes.getOrderById, {id: id}),
-                        dataType: 'json',
-                        success: function(data){
-                            if(orderTable){
-                                orderModal.on('click', '.close', function(){ orderModal.css("display","none");});
-                                orderModal.css("display","block");
-                                orderProductsTable.clear().draw();
-                                orderProductsTable.rows.add(data['result']).draw();
-                            }
-                        },
-                        error: function(data){
-                            errorHandle(data.responseJSON, null)
-                        }
-                    });
-                }
-                function getOrders(){
-                     $.ajax({
-                        type: 'GET',
-                        url: rootPublicRoutes.ordersForUser,
-                        dataType: 'json',
-                        success: function(data){
-                            if(orderTable){
-                                orderTable.clear().draw();
-                                orderTable.rows.add(data['result']).draw();
-                            }
-                        },
-                        error: function(data){
-                            errorHandle(data.responseJSON, null)
-                        }
-                    });
-                }
-                getOrders()
+extends layout.pug
+include mixins/formsMixin
+block content
+    link(rel='stylesheet', type='text/css', href='/stylesheets/create.css')
+    include mixins/snackbarMixin
+    +orderBase(['Id', 'Paid', 'Reciever Name', 'Address'])
+    +orderProductsModal(['Product Name', 'Quantity', 'Price'])
+    +snackbar()
+block append scripts
+    +orderHandler()
+    script.
+        var rootPublicRoutes = !{JSON.stringify(publicRoutes.root)};
+        $(document).ready( function () {
+            var orderTable = $('#ordersResult').DataTable( {
+                paging: true,
+                scrollY: 400,
+                columns: [
+                    { data: 'id' },
+                    { data: 'paid' },
+                    { data: 'reciever_name' },
+                    { data: 'address' }
+                ]
             });
+            var orderProductsTable = $('#orderProducts').DataTable({
+                paging: true,
+                scrollY: 400,
+                columns: [
+                    { data: 'name'},
+                    { data: 'quantity'},
+                    { data: 'price'}
+                ]
+            })
+            var orderModal = $('#orderModal')
+            $('.display tbody').on( 'click', function () {
+               openOrderModal($(this), rootPublicRoutes.getOrderById, orderTable, orderProductsTable);
+            });
+            $('#refreshOrders').click(function(){
+                getOrders(rootPublicRoutes.ordersForUser, orderTable)
+            })
+            getOrders(rootPublicRoutes.ordersForUser, orderTable)
+        });

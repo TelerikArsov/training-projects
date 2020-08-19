@@ -19,3 +19,66 @@ mixin submitForm(callbackMsg)
                 genericSubmitForm(data, event, this, callback)
             });
         });
+
+mixin orderBase(headers)
+    button#refreshOrders= "Refresh"
+    table#ordersResult.display()
+        thead
+            tr
+            each headerName, _ in headers
+                th= headerName
+        tbody
+mixin orderProductsModal(headers)
+    #orderModal.modal
+        .modal-content
+            span.close ×
+            table#orderProducts.display()
+                thead
+                    tr
+                    each headerName, _ in headers
+                        th= headerName
+                tbody
+mixin orderHandler()
+    link(rel='stylesheet', type='text/css', href='https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css')
+    script(type='text/javascript', charset='utf8', src='https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js')
+    script.
+        var orderModal = null;
+        var generateParamUrl = !{generateParamUrl}
+        $(document).ready( function () {
+            orderModal = $('#orderModal')
+        })
+        function openOrderModal(clicked, url, orderTable, orderProductsTable){
+            var id = orderTable.row( clicked.children('tr') ).data().id;
+            $.ajax({
+                type: 'GET',
+                url: generateParamUrl(url, {id: id}),
+                dataType: 'json',
+                success: function(data){
+                    if(orderTable){
+                        orderModal.on('click', '.close', function(){ orderModal.css("display","none");});
+                        orderModal.css("display","block");
+                        orderProductsTable.clear().draw();
+                        orderProductsTable.rows.add(data['result']).draw();
+                    }
+                },
+                error: function(data){
+                    errorHandle(data.responseJSON, null)
+                }
+            });
+        }
+        function getOrders(url, orderTable){
+            $.ajax({
+                type: 'GET',
+                url: url,
+                dataType: 'json',
+                success: function(data){
+                    if(orderTable){
+                        orderTable.clear().draw();
+                        orderTable.rows.add(data['result']).draw();
+                    }
+                },
+                error: function(data){
+                    errorHandle(data.responseJSON, null)
+                }
+            });
+        }
