@@ -1,0 +1,42 @@
+ul.navbar {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333;
+    position: -webkit-sticky; /* Safari */
+    position: sticky;
+    top: 0;
+  }
+  
+ul.navbar li, form.navbar {
+  float: left;
+  margin: 0;
+}
+
+ul.navbar li a, input.navbar{
+  display: block;
+  color: white;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+}
+
+input.navbar{
+  background-color: Transparent;
+  background-repeat:no-repeat;
+  border: none;
+  cursor:pointer;
+  overflow: hidden;
+  outline:none;
+  font-size: 16px;
+  padding: 10px 16px 14px 16px;
+}
+
+ul.navbar li a:hover, input.navbar:hover {
+  background-color: #111;
+}
+
+.active {
+  background-color: #4CAF50;
+}

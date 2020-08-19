@@ -1,20 +1,2 @@
-html
-  head
-    title= title
-  body
-    h1= message
-  a(href=publicRoutes.root.orders)
-    h2= 'Orders'
-  a(href=publicRoutes.root.catalog)
-    h2= 'Catalog'
-  if username
-    h2= username
-    a(href=publicRoutes.user.root)
-      h2= 'Account'
-    form(action=publicRoutes.user.logout, method='POST')
-      input(type='submit', value='Logout')
-  else
-    a(href=publicRoutes.user.registerPage)
-      h2= 'register'
-    a(href=publicRoutes.user.loginPage)
-      h2= 'login'
+extends layout.pug
+block content

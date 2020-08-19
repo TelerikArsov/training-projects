@@ -1,6 +1,7 @@
 extends layout.pug
-block content
+block append css
     link(rel='stylesheet', type='text/css', href='/stylesheets/create.css')
+block content
     include mixins/snackbarMixin
     +orderBase(['Id', 'Paid', 'Reciever Name', 'Address'])
     +orderProductsModal(['Product Name', 'Quantity', 'Price'])

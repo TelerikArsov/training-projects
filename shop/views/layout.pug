@@ -1,0 +1,22 @@
+extends base_layout.pug
+
+block append css
+    link(rel='stylesheet', type='text/css', href='/stylesheets/navbar.css')
+block navbar
+    ul.navbar
+        li
+            a(href=publicRoutes.root.orders)= 'Orders'
+        li
+            a(href=publicRoutes.root.catalog)= 'Catalog'
+        li
+            a(href=publicRoutes.admin.createPage)= 'Create Tags, categ. and prod.'
+        if username
+            li
+                a(href=publicRoutes.user.root)= 'Account'
+            form.navbar(action=publicRoutes.user.logout, method='POST')
+                input.navbar(type='submit', value='Logout')
+        else
+            li
+                a(href=publicRoutes.user.registerPage)= 'Register'
+            li
+                a(href=publicRoutes.user.loginPage)= 'Login'
