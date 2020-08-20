@@ -7,8 +7,7 @@ ul.navbar {
     position: -webkit-sticky; /* Safari */
     position: sticky;
     top: 0;
-  }
-  
+}
 ul.navbar li, form.navbar {
   float: left;
   margin: 0;

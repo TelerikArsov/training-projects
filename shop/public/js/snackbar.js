@@ -48,7 +48,7 @@ function genericSubmitForm(data, event, form, success){
         type: 'POST',
         url: $(form).attr('action'),
         dataType: 'json',
-        success:  function(data){
+        success: success || function(data){
             console.log(data)
             if (data.result == 'redirect') {
                 window.location.replace(data.url);

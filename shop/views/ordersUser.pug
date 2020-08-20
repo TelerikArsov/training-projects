@@ -3,7 +3,7 @@ block append css
     link(rel='stylesheet', type='text/css', href='/stylesheets/create.css')
 block content
     include mixins/snackbarMixin
-    +orderBase(['Id', 'Paid', 'Reciever Name', 'Address'])
+    +orderBase(['Id', 'Paid', 'Reciever Name', 'Address'])(class="styled-btn" id="refreshOrders")
     +orderProductsModal(['Product Name', 'Quantity', 'Price'])
     +snackbar()
 block append scripts

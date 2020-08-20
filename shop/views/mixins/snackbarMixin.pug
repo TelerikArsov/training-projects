@@ -29,7 +29,7 @@ mixin table(headers)
         tbody
 
 mixin orderBase(headers)
-    button#refreshOrders= "Refresh"
+    button&attributes(attributes)= "Refresh"
     +table(headers)(class="display", id="ordersResult")
 mixin orderProductsModal(headers)
     #orderModal.modal

@@ -19,6 +19,7 @@ router.use((req, res, next) => {
         res.locals.filterProps = productController.filterProps;
         res.locals.filterTypes = productController.types;
     }
+    res.locals.username = req.session.user || null
     next();
 })
 
@@ -73,7 +74,7 @@ router.get(root.get.cart, function(req, res, next) {
 
 router.get(root.get.ordersTable, function(req, res, next){
     if(req.session.user){
-        orderController.getOrders(req.session.userId, req.session.role, req.params.id)
+        orderController.getOrders(req.session.userId, req.session.role, 1)
             .then(result => res.status(200).json({result: result.rows}))
             .catch(err => next(err))
     }else{

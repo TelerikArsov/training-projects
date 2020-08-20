@@ -1,0 +1,9 @@
+#formHolder {
+    min-height: 50%;
+    display:flex;
+    justify-content: center;
+}
+form {
+    margin: auto;
+    width: 30%;
+}

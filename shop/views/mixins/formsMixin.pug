@@ -1,5 +1,5 @@
 mixin registerUserForm(path)
-    form#path(action=path, method='POST')
+    form#path.bodyForm(action=path, method='POST')
         label(for='username') Username:
         br
         input(type='text', name='username', value='')
@@ -20,7 +20,7 @@ mixin registerUserForm(path)
         input(type='submit', value='Submit')
 
 mixin registerWorkerForm(path)
-    form(action=path, method='POST')
+    form.bodyForm(action=path, method='POST')
         label(for='username') Username:
         br
         input(type='text', name='username', value='')
@@ -40,7 +40,7 @@ mixin registerWorkerForm(path)
         ul.errors
         input(type='submit', value='Submit')
 mixin loginUserForm(path)
-    form(action=path, method='POST')
+    form.bodyForm(action=path, method='POST')
         label(for='username') Username:
         br
         input(type='text', name='username', value='')
@@ -52,7 +52,7 @@ mixin loginUserForm(path)
         ul.errors
         input(type='submit', value='Submit')
 mixin loginWorkerForm(path)
-    form(action=path, method='POST')
+    form.bodyForm(action=path, method='POST')
         label(for='username') Username:
         br
         input(type='text', name='username', value='')
@@ -64,7 +64,7 @@ mixin loginWorkerForm(path)
         ul.errors
         input(type='submit', value='Submit')
 mixin tcForm(path)
-    form.TC(action=path, method='POST')
+    form.TC.bodyForm(action=path, method='POST')
         label(for='name') Name:
         br
         input(type='text', name='name', value='')
@@ -83,10 +83,10 @@ mixin tcForm(path)
         input(type='submit', value='Submit')
 mixin productForm(path)
     .productFromContainer
-        form.productImage(method='post', enctype='multipart/form-data', action='/admin/upload/image')
+        form.productImage.bodyForm(method='post', enctype='multipart/form-data', action='/admin/upload/image')
                 input(type='hidden', name='id', value='')
                 input(type='file', name='productImage')
-        form.Products(action=path, method='POST')
+        form.Products.bodyForm(action=path, method='POST')
             label(for='name') Name:
             br
             input(type='text', name='name', value='')
@@ -120,14 +120,14 @@ mixin productForm(path)
             ul.errors
             input(type='submit', value='Submit')
 mixin productAmmountForm(path)
-    form.Products(action=path, method='POST')
+    form.Products.bodyForm(action=path, method='POST')
         label(for='ammount') Ammount: 
         br
         input(type='number', name='ammount', value='')
         ul.errors
         input(type='submit', value='Submit')
 mixin editUserAccountForm(path)
-    form(action=path, method='POST')
+    form.bodyForm(action=path, method='POST')
         label(for='username') Username:
         br
         input(type='text', name='username', value=username)
@@ -152,7 +152,7 @@ mixin editUserAccountForm(path)
         input(type='submit', value='Submit')
 
 mixin editWorkerAccountForm(path)
-    form(action=path, method='POST')
+    form.bodyForm(action=path, method='POST')
         label(for='username') Username:
         br
         input(type='text', name='username', value=username)

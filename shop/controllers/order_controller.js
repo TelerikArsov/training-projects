@@ -1,5 +1,7 @@
-var db = require('./db');
-var cartController = require('./cart_controller');
+const db = require('./db');
+const cartController = require('./cart_controller');
+
+var pageLimit = 50
 
 async function addToOrder(orderId, data){
     return await db.asyncQuery(`INSERT INTO order_items (product_id, quantity, 
@@ -8,7 +10,7 @@ async function addToOrder(orderId, data){
 }
 
 async function getOrderId(userId, name, paid, address, cartId){
-    const result = await db.asyncQuery(`SELECT * FROM orders WHERE user_id = $1 AND reciever_name = $2 
+    var result = await db.asyncQuery(`SELECT * FROM orders WHERE user_id = $1 AND reciever_name = $2 
     AND address = $3 AND orignal_cart_id = $4`, [userId, name, address, cartId]);
     let orderId = null;
     if(result.rowCount == 1){
@@ -39,18 +41,23 @@ async function addCartItems(userId, name, paid, address, cartId){
 }
 
 exports.createOrder = async (userId, paid, name, address) => {
-    const result = await cartController.getCartId(userId);
-    const cartId = result.rows[0].id;
+    const cartId = await cartController.getCartId(userId);
     return addCartItems(userId, name, paid, address, cartId);
 }
 
-exports.getOrders = (userId, role) => {
+exports.getOrders = (userId, role, page) => {
     let query = 'SELECT id, user_id, paid, reciever_name, address FROM orders';
     let params = [];
     if(userId && role != "admin"){
         query += ' WHERE user_id = $1';
-        params = [userId,];
+        params.push(userId);
     }
+    query += ' LIMIT $2 OFFSET $3'
+    page--;
+    if(page < 0){
+        page = 0
+    }
+    params.push(pageLimit, page);
     return db.asyncQuery(query, params);
 }
 
@@ -64,4 +71,8 @@ exports.getOrderItems = (userId, role, orderId) => {
         query += " AND o.user_id = $2";
     }
     return  db.asyncQuery(query, params);
+}
+
+exports.changePageLimit = (newLimit) => {
+    pageLimit = newLimit > 0 ? newLimit : 1;
 }

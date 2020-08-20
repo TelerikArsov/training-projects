@@ -17,17 +17,42 @@ exports.asyncQuery = async function(text, param) {
 };
 
 class DBerror extends Error{
-    constructor(errors, errorMsg) {
+    constructor(errorCode, errorCodes) {
+        this.ErrorCodeMap = {
+            NotNullViolation: 23502,
+            UniqueViolation: 23505,
+            InvalidForeignKey: 42830 
+        }
+        this.error_codes = {
+            [this.ErrorCodeMap.NotNullViolation]: "Empty values are not allowed!",
+            [this.ErrorCodeMap.UniqueViolation]: "Already exists!",
+            [this.ErrorCodeMap.InvalidForeignKey]: "Invalid connection ERROR CODE 42830"
+        }
+        this.assignErrorCodes(errorCodes);
+        super(this.getErrorMsg(errorCode))
         this.name = 'ValidateError';
-        this.error_msg = errorMsg;
-        var error = Error.call(this, this.getErrorMsg(errors.code));
-        this.message = error.message;
-        this.stack = error.stack;
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, CustomError)
+        }
     };
+    getErrorCodeMap(){
+        return { ...this.ErrorCodeMap}
+    }
+    assignErrorCodes(errorCodes){
+        for(const code in errorCodes){
+            if(errorCodes[code]) {
+                errorCodes[code] = errorCodes[code];
+            }
+        }
+    }
     getErrorMsg(error_code){
-        return this.error_msg[error_code] || "Unexpected error occured!"
+        return this.error_codes[error_code] || "Unexpected error occured!"
     }
 }
 
-
+exports.ErrorCodeMap = {
+    NotNullViolation: 23502,
+    UniqueViolation: 23505,
+    InvalidForeignKey: 42830 
+}
 exports.DBerror = DBerror

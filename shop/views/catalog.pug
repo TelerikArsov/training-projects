@@ -2,46 +2,47 @@ extends layout.pug
 block append css
     link(rel='stylesheet', type='text/css', href='/stylesheets/catalog.css')
 block content
-    ul
-        for category in categories
-            li
-                button.category(type='button', value=category.name)= category.name
-    #filterOptions
-        each value, prop in filterProps
-            - var filterId = prop + 'Filter'
-            label.filterOption
-                = value.name + ': '
-                if value.type == filterTypes.text
-                    input(id=filterId, type='text', name=prop, autocomplete='off')
-                else if value.type == filterTypes.dropdown
-                    select(id=filterId, class="js-example-basic-single" name=prop)
-                else if value.type == filterTypes.multiDropdown
-                    select(id=filterId, class="js-example-basic-multiple" name=prop, multiple="multiple") 
-                else if value.type == filterTypes.range
-                    div(id=filterId, class='slider', name=prop)
-                    
-        button#filter Filter
-    #catalogContent
-        #productGrid
-        div
-            #cartList
-            button#submitCart Create Order
-    #orderInfo.modal
-        .modal-content
-            span.close ×
-            form#orderInfoForm(action=publicRoutes.root.createOrder)
-                label(for='address') Address:
-                br
-                input(type='text', name='address', value=username)
-                br
-                label(for='name') Reciever Name: 
-                br
-                input(type='text', name='name', value=email)
-                br
-                ul.errors
-                input#placeOrder(type='submit', value='Submit')
+    #mainContainer
+        #filterOptions
+            each value, prop in filterProps
+                - var filterId = prop + 'Filter'
+                label.filterOption
+                    = value.name + ': '
+                    if value.type == filterTypes.text
+                        input(id=filterId, type='text', name=prop, autocomplete='off')
+                    else if value.type == filterTypes.dropdown
+                        select(id=filterId, class="js-example-basic-single" name=prop)
+                    else if value.type == filterTypes.multiDropdown
+                        select(id=filterId, class="js-example-basic-multiple" name=prop, multiple="multiple") 
+                    else if value.type == filterTypes.range
+                        div(id=filterId, class='slider', name=prop)
+                        
+            button#filter.styled-btn  Filter
+        #content
+            #categoryButtons.btn-group
+                for category in categories
+                    button.category(type='button', value=category.name)= category.name
+            #catalogContent
+                #productGrid
+                #cartListContainer
+                    #cartList
+                    button#submitCart.styled-btn  Create Order
+            #orderInfo.modal
+                .modal-content
+                    span.close ×
+                    form#orderInfoForm(action=publicRoutes.root.createOrder)
+                        label(for='address') Address:
+                        br
+                        input(type='text', name='address', value=username)
+                        br
+                        label(for='name') Reciever Name: 
+                        br
+                        input(type='text', name='name', value=email)
+                        br
+                        ul.errors
+                        input#placeOrder(type='submit', value='Submit')
     +snackbar()
-block scripts
+block append scripts
     link(href='https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/13.1.4/nouislider.css', rel='stylesheet')
     script(src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/13.1.4/nouislider.js")
     link(href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet")
@@ -85,6 +86,7 @@ block scripts
                 var form = this
                 genericSubmitForm({paid: 1}, event, form, function (data){
                     refreshCart();
+                    $("#orderInfo").css("display", "none")
                     showSnackbar("Created order", true);
                 })
             });
@@ -107,7 +109,7 @@ block scripts
                     url: rootPublicRoutes.userCart,
                     success: function(data){
                         $.each(data['result'], function(_, el){
-                            addToCart(el);
+                            cartItemChange(el);
                         });
                     }
                 })

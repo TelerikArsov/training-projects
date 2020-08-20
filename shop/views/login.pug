@@ -1,7 +1,11 @@
 extends layout.pug
 include mixins/formsMixin
+block append css
+    link(rel='stylesheet', type='text/css', href='/stylesheets/account.css')
+    link(rel='stylesheet', type='text/css', href='/stylesheets/form.css')
 block content
-    +loginUserForm(publicRoutes.user.login)
+    #formHolder
+        +loginUserForm(publicRoutes.user.login)
     +snackbar()
 block append scripts
     +submitForm()
