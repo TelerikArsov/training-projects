@@ -57,7 +57,7 @@ block scripts
             var currentCategory = null;
             $('button.category').on('click', function(){
                 currentCategory = $(this).val();
-                filter({ category: $(this).val(), getPropInfo: true })
+                filter({ category: currentCategory, getPropInfo: true })
             });
             $('div.slider').each((idx, el) => {
                 noUiSlider.create($(el).get(0), {
@@ -114,52 +114,30 @@ block scripts
             }
             refreshCart();
             $('body').on('click', 'button.addToCart', function(){
-                $.ajax({
-                    data: {productId: $(this).attr('productId')},
-                    type: 'POST',
-                    url: rootPublicRoutes.addToCart,
-                    dataType: 'json',
-                    success: function(data){
-                        showSnackbar("Added to cart", true);
-                        addToCart(data.result);
-                    },
-                    error: function(data){
-                        errorHandle(data.responseJSON, null)
-                    }
-                });
+                changeQuantityCart({productId: $(this).attr('productId')}, 
+                    rootPublicRoutes.addToCart, "Added to cart");
             });
             $('body').on('click', '[id^=Add]', function(){
                 var data = {productId: $(this).attr('id').substring(3), incr: 1};
-                changeQuantityCart(data);
+                changeQuantityCart(data, rootPublicRoutes.cartChangeQuantity, "Changed quantity");
             });
             $('body').on('click', '[id^=Sub]', function(){
                 var data = {productId: $(this).attr('id').substring(3), incr: -1};
-                changeQuantityCart(data);
+                changeQuantityCart(data, rootPublicRoutes.cartChangeQuantity, "Changed quantity");
             });
             $('body').on('click', '[id^=Del]', function(){
-                $.ajax({
-                    data: {productId: $(this).attr('id').substring(3)},
-                    type: 'POST',
-                    url: rootPublicRoutes.deleteCartItem,
-                    dataType: 'json',
-                    success: function(data){
-                        showSnackbar("Changed quantity", true);
-                        addToCart(data.result[0]);
-                    },
-                    error: function(data){
-                        errorHandle(data.responseJSON, null)
-                    }
-                });
+                changeQuantityCart({productId: $(this).attr('id').substring(3)},
+                 rootPublicRoutes.deleteCartItem, "Removed product");
             });
-            function changeQuantityCart(data){
+            function changeQuantityCart(data, url, snackbarSuccessMsg){
                 $.ajax({
                     data: data,
                     type: 'POST',
-                    url: rootPublicRoutes.cartChangeQuantity,
+                    url: url,
                     dataType: 'json',
                     success: function(data){
-                        showSnackbar("Changed quantity", true);
-                        addToCart(data.result[0]);
+                        showSnackbar(snackbarSuccessMsg, true);
+                        cartItemChange(data.result);
                     },
                     error: function(data){
                         errorHandle(data.responseJSON, null)
@@ -172,7 +150,7 @@ block scripts
                         <button id="Sub${data.product_id}">-</button>
                         <button id="Del${data.product_id}">X</button>`
             }
-            function addToCart(data){
+            function cartItemChange(data){
                 if(data.id){
                     if($(`#${data.id}CartId`).length){
                         $(`#${data.product_id}Quantity`).html(`

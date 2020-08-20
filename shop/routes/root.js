@@ -94,7 +94,7 @@ router.get(root.get.order, function(req, res, next){
 router.post(root.post.cartChangeQuantity, function(req, res, next){
     if(req.session.user){
         cartController.changeQuantity(req.session.userId, req.body.productId, req.body.incr)
-            .then(result => res.status(200).json({result: result.rows}))
+            .then(result => res.status(200).json({result: result.rows[0]}))
             .catch(err => next(err));
     }else{
         res.status(500).json({errors: "Not logged in!"});
@@ -104,7 +104,7 @@ router.post(root.post.cartChangeQuantity, function(req, res, next){
 router.post(root.post.deleteCartItem, function(req, res, next){
     if(req.session.user){
         cartController.deleteCartItem(req.session.userId, req.body.productId)
-            .then(result => res.status(200).json({result: result.rows}))
+            .then(result => res.status(200).json({result: result.rows[0]}))
             .catch(err => next(err));
     }else{
         res.status(500).json({errors: "Not logged in!"});

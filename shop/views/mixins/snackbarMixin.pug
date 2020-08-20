@@ -20,24 +20,22 @@ mixin submitForm(callbackMsg)
             });
         });
 
-mixin orderBase(headers)
-    button#refreshOrders= "Refresh"
-    table#ordersResult.display()
+mixin table(headers)
+    table&attributes(attributes)
         thead
             tr
             each headerName, _ in headers
                 th= headerName
         tbody
+
+mixin orderBase(headers)
+    button#refreshOrders= "Refresh"
+    +table(headers)(class="display", id="ordersResult")
 mixin orderProductsModal(headers)
     #orderModal.modal
         .modal-content
             span.close ×
-            table#orderProducts.display()
-                thead
-                    tr
-                    each headerName, _ in headers
-                        th= headerName
-                tbody
+            +table(headers)(class="display", id="orderProducts")
 mixin orderHandler()
     link(rel='stylesheet', type='text/css', href='https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css')
     script(type='text/javascript', charset='utf8', src='https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js')
