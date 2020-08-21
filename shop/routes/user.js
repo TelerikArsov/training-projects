@@ -69,7 +69,7 @@ router.post(user.post.register, [
         }
         return true;
     })
-], function(req, res) {
+], function(req, res, next) {
     let errors = validate.handleValidation(req, res)
     if(errors){
         res.status(500).json({filterErrors: errors})
@@ -83,8 +83,8 @@ router.post(user.post.register, [
                         token: crypto.randomBytes(16).toString('hex')
                     }
                 }
-                return verifTokenController.createToken(tokenData);
-            }).then(_ => {
+                return verifTokenController.createToken(tokenData.user_id, tokenData.token);
+            }).then(result => {
                 let transporter = nodemailer.createTransport({
                     service: 'gmail',
                     auth: {
@@ -100,11 +100,11 @@ router.post(user.post.register, [
                     from: 'no-reply@yourwebapplication.com',
                     to: req.body.email, 
                     subject: 'Account Verification Token', 
-                    text: 'Hello,\n\n' + 'Please verify your account by clicking the link: \nhttp:\/\/' + req.headers.host + '\/user\/confirmation\/' + tokenData.token + '.\n' 
+                    text: 'Hello,\n\n' + 'Please verify your account by clicking the link: \nhttp:\/\/' + req.headers.host + '\/user\/confirmation\/' + result.rows[0].token + '.\n' 
                 };
                 return transporter.sendMail(message)
-            }).then(_ =>  res.status(200).send())
-            .catch();
+            }).then(_ => res.status(200).json({success: true}))
+            .catch(err => next(err));
     }
 });
 
@@ -112,17 +112,12 @@ router.get(user.get.confirmationToken, function(req, res, next) {
     verifTokenController.getToken(req.params.token)
         .then(result => {
             if(result.rowCount == 1) {
-                userController.verifyUser(result.rows[0].user_id, (err, _result) => {
-                    if(err){
-                        res.status(400).json({errors: "User not found"});
-                    }else {
-                        res.redirect(user.prefix + root.get.login)
-                    }
-                });
+                return userController.verifyUser(result.rows[0].user_id);
             }else{
-                res.status(500).json({errors: "Cant verify token"});
+                throw new Error("Cant verify token")
             }
         })
+        .then(_ =>  res.redirect(user.prefix + user.get.login))
         .catch(err => next(err));
 });
 

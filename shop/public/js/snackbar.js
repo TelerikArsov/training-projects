@@ -55,7 +55,8 @@ function genericSubmitForm(data, event, form, success){
             }
         },
         error: function(data){
-            errorHandle(data.responseJSON, $(form).children('.errors')[0])
+            if(data)
+                errorHandle(data.responseJSON, $(form).children('.errors')[0])
         }
     })
     if(event){

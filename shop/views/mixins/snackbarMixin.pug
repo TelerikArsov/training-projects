@@ -10,8 +10,8 @@ mixin submitForm(callbackMsg)
             var callback = null
             var msg = !{JSON.stringify(callbackMsg)}
             if(msg) {
-                callback = (data)=> {
-                    showSnackbar("Account edited", true);
+                callback = (data) => {
+                    showSnackbar(msg, true);
                 }
             }
             $('form').on('submit', function(event) {

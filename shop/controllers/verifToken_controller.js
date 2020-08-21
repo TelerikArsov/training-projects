@@ -3,7 +3,7 @@ var db = require('./db');
 
 exports.createToken = (user_id, token) => {
     return db.asyncQuery(`INSERT INTO verification_token (user_id, token, created_on) 
-    VALUES ($1, $2, $3)`, [user_id, token, new Date().toISOString()]);
+    VALUES ($1, $2, $3) RETURNING token`, [user_id, token, new Date().toISOString()]);
 }
 
 exports.getToken = (token) => {
