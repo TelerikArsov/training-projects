@@ -36,6 +36,8 @@ create table users(
     created_on timestamp not null,
     last_login timestamp,
     isverified boolean not null default FALSE
+    last_login_attempt timestamp,
+    remaining_login_tries int default 3;
 );
 
 create table workers(
